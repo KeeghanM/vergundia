@@ -4,17 +4,17 @@ export const biomes: BiomeMap = {
   ocean: {
     name: 'Ocean',
     conditions: {
-      maxHeight: 0.4,
+      maxHeight: 0.3,
     },
     terrainTypes: {
-      '-0.5': {
+      '-0.7': {
         type: 'deep ocean',
         label: '≈',
         color: '#000080',
         difficulty: 1,
         requirements: [r.BOAT],
       },
-      '0.5': {
+      '0.2': {
         type: 'ocean',
         label: '~',
         color: '#0000CD',
@@ -29,9 +29,9 @@ export const biomes: BiomeMap = {
       },
     },
     config: {
-      terrainScale: 0.02,
-      smallFeatureScale: 2,
-      smallFeatureInfluence: 0.6,
+      terrainScale: 0.015,
+      smallFeatureScale: 3,
+      smallFeatureInfluence: 0.4,
     },
   },
   coral: {
@@ -40,7 +40,7 @@ export const biomes: BiomeMap = {
       minHeight: 0.2,
       maxHeight: 0.4,
       minTemp: 0.7,
-      requiresAdjacent: ['Ocean'],
+      requiresExclusiveAdjacent: ['Ocean'],
       searchRadius: 2,
     },
     terrainTypes: {
@@ -61,10 +61,10 @@ export const biomes: BiomeMap = {
   coast: {
     name: 'Coastal',
     conditions: {
-      minHeight: 0.35,
+      minHeight: 0.28,
       maxHeight: 0.45,
       requiresAdjacent: ['Ocean'],
-      searchRadius: 3,
+      searchRadius: 2,
     },
     terrainTypes: {
       '-0.8': { type: 'bay', label: '~', color: '#4169E1', difficulty: 1 },
@@ -81,16 +81,16 @@ export const biomes: BiomeMap = {
   desert: {
     name: 'Desert',
     conditions: {
-      minHeight: 0.4,
-      maxHeight: 0.6,
-      minTemp: 0.7,
-      maxMoisture: 0.3,
+      minHeight: 0.35,
+      maxHeight: 0.65,
+      minTemp: 0.6,
+      maxMoisture: 0.25,
       requiresAdjacent: ['Coastal', 'Plains', 'Desert'],
-      searchRadius: 3,
+      searchRadius: 4,
     },
     terrainTypes: {
-      '-0.5': { type: 'desert', label: '∴', color: '#D2B48C', difficulty: 1 },
-      '0.2': { type: 'dunes', label: '︵', color: '#DEB887', difficulty: 1 },
+      '-0.6': { type: 'desert', label: '∴', color: '#D2B48C', difficulty: 1 },
+      '0.3': { type: 'dunes', label: '︵', color: '#DEB887', difficulty: 1 },
       '1.0': { type: 'canyon', label: '∎', color: '#A0522D', difficulty: 1 },
     },
     config: {
@@ -118,19 +118,24 @@ export const biomes: BiomeMap = {
       smallFeatureInfluence: 0.4,
     },
   },
-
   plains: {
     name: 'Plains',
     conditions: {
-      minHeight: 0.4,
-      maxHeight: 0.6,
+      minHeight: 0.38,
+      maxHeight: 0.55,
       minTemp: 0.3,
       maxMoisture: 0.7,
-      requiresAdjacent: ['Coastal'],
+      requiresAdjacent: ['Coastal', 'Plains'],
       searchRadius: 3,
     },
     terrainTypes: {
-      '-0.8': { type: 'lake', label: '~', color: '#4169E1', difficulty: 1 },
+      '-0.8': {
+        type: 'lake',
+        label: '~',
+        color: '#4169E1',
+        difficulty: 1,
+        requirements: [r.BOAT],
+      },
       '-0.5': { type: 'marsh', label: '♠', color: '#2E8B57', difficulty: 1 },
       '0.5': { type: 'grassland', label: '"', color: '#90EE90', difficulty: 1 },
       '1.0': { type: 'hills', label: '⌢', color: '#228B22', difficulty: 1 },
@@ -145,11 +150,11 @@ export const biomes: BiomeMap = {
     name: 'Forest',
     conditions: {
       minHeight: 0.4,
-      maxHeight: 0.6,
+      maxHeight: 0.7,
       minTemp: 0.3,
-      minMoisture: 0.6,
+      minMoisture: 0.55,
       requiresAdjacent: ['Plains', 'Forest'],
-      searchRadius: 2,
+      searchRadius: 3,
     },
     terrainTypes: {
       '-0.8': {
@@ -184,20 +189,20 @@ export const biomes: BiomeMap = {
     name: 'Mountains',
     conditions: {
       minHeight: 0.6,
-      maxHeight: 0.8,
+      maxHeight: 0.9,
       maxTemp: 0.4,
-      requiresAdjacent: ['Mountain'],
+      requiresAdjacent: ['Mountains', 'Alpine'],
       searchRadius: 2,
     },
     terrainTypes: {
       '-0.8': { type: 'valley', label: 'v', color: '#4169E1', difficulty: 1 },
-      '-0.5': {
+      '-0.3': {
         type: 'foothills',
         label: '⌢',
         color: '#A0522D',
         difficulty: 1,
       },
-      '0.5': {
+      '0.8': {
         type: 'peaks',
         label: '△',
         color: '#808080',
@@ -213,16 +218,18 @@ export const biomes: BiomeMap = {
       },
     },
     config: {
-      terrainScale: 0.01,
-      smallFeatureScale: 2,
-      smallFeatureInfluence: 0.6,
+      terrainScale: 0.008,
+      smallFeatureScale: 4,
+      smallFeatureInfluence: 0.5,
     },
   },
   alpine: {
     name: 'Alpine',
     conditions: {
-      minHeight: 0.8,
+      minHeight: 0.85,
       maxTemp: 0.3,
+      requiresAdjacent: ['Mountains', 'Alpine'],
+      searchRadius: 2,
     },
     terrainTypes: {
       '-0.8': {
@@ -261,12 +268,11 @@ export const biomes: BiomeMap = {
   oasis: {
     name: 'Oasis',
     conditions: {
-      minHeight: 0.45,
-      maxHeight: 0.55,
+      minHeight: 0.35,
       minTemp: 0.8,
       maxMoisture: 0.4,
-      requiresAdjacent: ['Desert'],
-      searchRadius: 8,
+      requiresExclusiveAdjacent: ['Desert'],
+      searchRadius: 4,
     },
     terrainTypes: {
       '1.0': { type: 'oasis', label: '≈', color: '#4169E1', difficulty: 1 },
@@ -282,8 +288,8 @@ export const biomes: BiomeMap = {
     conditions: {
       minHeight: 0.7,
       minTemp: 0.8,
-      requiresAdjacent: ['Ocean'],
-      searchRadius: 2,
+      requiresExclusiveAdjacent: ['Ocean'],
+      searchRadius: 4,
     },
     terrainTypes: {
       '-0.8': {

@@ -35,6 +35,7 @@ export type BiomeConditions = {
   minHeight?: number
   maxHeight?: number
   requiresAdjacent?: string[]
+  requiresExclusiveAdjacent?: string[]
   searchRadius?: number
 }
 

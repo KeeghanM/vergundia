@@ -25,11 +25,13 @@ export class World {
 
     // Increase detail noise to create more interesting local variations
     // But keep influence low to avoid breaking up the large features
-    this.heightDetailNoise = new NoiseGenerator({ scale: 0.1, influence: 0.5 })
+    this.heightDetailNoise = new NoiseGenerator({ scale: 0.1, influence: 0.4 })
 
     // Make temperature and moisture even more gradual to create larger climate zones
-    this.temperatureNoise = new NoiseGenerator({ scale: 0.01 })
-    this.moistureNoise = new NoiseGenerator({ scale: 0.015 })
+    this.temperatureNoise = new NoiseGenerator({ scale: 0.005 })
+    this.moistureNoise = new NoiseGenerator({ scale: 0.008 })
+
+    // Initialize biome systems
     this.biomeSystems = Object.values(biomes).map((biome) => ({
       biome,
       terrainSystem: new TerrainSystem(biome.terrainTypes),
@@ -134,7 +136,6 @@ export class World {
           temp,
           moisture
         )
-
         const terrainValue = this.getTerrainValue(worldX, worldY, biome.config)
         chunk.terrainData[dx][dy] = {
           terrain: terrainSystem.getTerrainForValue(terrainValue),
@@ -155,14 +156,16 @@ export class World {
     x: number,
     y: number,
     requiredBiomes: string[],
+    exclusiveBiomes: string[] | undefined,
     radius: number
   ): boolean {
-    // Check in a square around the point for required biomes
+    let foundRequired = false
+
+    // Check all tiles in radius
     for (let dx = -radius; dx <= radius; dx++) {
       for (let dy = -radius; dy <= radius; dy++) {
-        if (dx === 0 && dy === 0) continue // Skip self
+        if (dx === 0 && dy === 0) continue
 
-        // Get biome at this adjacent point
         const { height, temp, moisture } = this.getEnvironmentConditions(
           x + dx,
           y + dy
@@ -176,15 +179,25 @@ export class World {
           false
         )
 
-        if (
-          adjacentBiome &&
-          requiredBiomes.includes(adjacentBiome.biome.name)
-        ) {
-          return true
+        if (!adjacentBiome) continue
+
+        // If we're checking exclusive biomes, ANY non-matching biome fails the check
+        if (exclusiveBiomes) {
+          if (!exclusiveBiomes.includes(adjacentBiome.biome.name)) {
+            return false
+          }
+        }
+
+        // For regular adjacent check, ANY matching biome passes
+        if (requiredBiomes.includes(adjacentBiome.biome.name)) {
+          foundRequired = true
         }
       }
     }
-    return false
+
+    // If exclusive check passed (didn't return false) and we either
+    // found a required biome or weren't looking for one, return true
+    return foundRequired || !requiredBiomes.length
   }
 
   private getBiomeForConditions(
@@ -195,7 +208,6 @@ export class World {
     moisture: number,
     checkAdjacency: boolean = true
   ) {
-    // Find all valid biomes for these conditions
     const validBiomes = this.biomeSystems.filter(({ biome }) => {
       const { conditions } = biome
 
@@ -210,18 +222,38 @@ export class World {
 
       if (!basicConditionsMet) return false
 
-      // Check adjacency requirements if needed
-      if (
-        checkAdjacency &&
-        conditions.requiresAdjacent &&
-        conditions.requiresAdjacent.length > 0
-      ) {
-        return this.checkAdjacentBiomes(
-          x,
-          y,
-          conditions.requiresAdjacent,
-          conditions.searchRadius ?? 3
-        )
+      // Adjacency checks
+
+      if (checkAdjacency) {
+        if ((conditions.requiresExclusiveAdjacent?.length ?? 0) > 0) {
+          // Must ONLY be next to these biomes
+          if (
+            !this.checkAdjacentBiomes(
+              x,
+              y,
+              [], // no required biomes
+              conditions.requiresExclusiveAdjacent,
+              conditions.searchRadius ?? 3
+            )
+          ) {
+            return false
+          }
+        }
+
+        if ((conditions.requiresAdjacent?.length ?? 0) > 0) {
+          // Must be next to AT LEAST ONE of these biomes
+          if (
+            !this.checkAdjacentBiomes(
+              x,
+              y,
+              conditions.requiresAdjacent ?? [],
+              undefined, // no exclusive check
+              conditions.searchRadius ?? 3
+            )
+          ) {
+            return false
+          }
+        }
       }
 
       return true
