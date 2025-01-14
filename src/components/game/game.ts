@@ -39,16 +39,16 @@ export class Game {
 
     switch (e.key) {
       case 'ArrowLeft':
-        this.player.move(-1, 0)
+        if (this.player.canMove(-1, 0, this.world)) this.player.move(-1, 0)
         break
       case 'ArrowRight':
-        this.player.move(1, 0)
+        if (this.player.canMove(1, 0, this.world)) this.player.move(1, 0)
         break
       case 'ArrowUp':
-        this.player.move(0, -1)
+        if (this.player.canMove(0, -1, this.world)) this.player.move(0, -1)
         break
       case 'ArrowDown':
-        this.player.move(0, 1)
+        if (this.player.canMove(0, 1, this.world)) this.player.move(0, 1)
         break
       default:
         return

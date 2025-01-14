@@ -1,26 +1,48 @@
 import type { Canvas } from '../../lib/canvas'
 import type { World } from './world'
 
+export enum Requirement {
+  BOAT = 'boat',
+  CLIMB = 'climb',
+  FLY = 'fly',
+  SWIM = 'swim',
+  KEY = 'key',
+  CUT = 'cut',
+}
+
 export type Terrain = {
   type: string
   label: string
   color: string
+  difficulty: number
+  requirements?: Requirement[]
 }
 
 export type BiomeTerrainMap = {
   [key: string]: Terrain
 }
 
-type BiomeConfig = {
+export type BiomeConfig = {
   terrainScale: number
   smallFeatureScale: number
   smallFeatureInfluence: number
+}
+export type BiomeConditions = {
+  minTemp?: number
+  maxTemp?: number
+  minMoisture?: number
+  maxMoisture?: number
+  minHeight?: number
+  maxHeight?: number
+  requiresAdjacent?: string[]
+  searchRadius?: number
 }
 
 export type Biome = {
   name: string
   terrainTypes: BiomeTerrainMap
   config: BiomeConfig
+  conditions: BiomeConditions
 }
 
 export type BiomeMap = {

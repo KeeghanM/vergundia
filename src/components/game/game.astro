@@ -5,7 +5,6 @@
 <div id="game"></div>
 
 <script>
-  import { biomes } from './dataFiles/biomes'
   import { Canvas } from '../../lib/canvas'
   import { World } from './world'
   import { Game } from './game.ts'
@@ -14,12 +13,7 @@
   const HEIGHT = document.body.clientHeight
 
   const canvas = new Canvas('#game', WIDTH, HEIGHT)
-  const world = new World(biomes, {
-    baseTerrainScale: 0.08,
-    biomeScale: 0.005,
-    biomeFineScale: 0.09,
-    biomeFineInfluence: 0.2,
-  })
+  const world = new World()
 
   const game = new Game({
     canvas,

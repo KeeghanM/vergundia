@@ -1,86 +1,307 @@
-export const biomes = {
-  '-0.6': {
+import { Requirement as r, type BiomeMap } from '../index.t'
+
+export const biomes: BiomeMap = {
+  ocean: {
     name: 'Ocean',
+    conditions: {
+      maxHeight: 0.4,
+    },
     terrainTypes: {
-      '-0.8': { type: 'deep ocean', label: '≈', color: '#000080' }, // Deep waves
-      '-0.5': { type: 'ocean', label: '~', color: '#0000CD' }, // Waves
-      '0.2': { type: 'shallow water', label: '≋', color: '#4169E1' }, // Ripples
-      '1.0': { type: 'reef', label: '░', color: '#87CEEB' }, // Coral texture
+      '-0.5': {
+        type: 'deep ocean',
+        label: '≈',
+        color: '#000080',
+        difficulty: 1,
+        requirements: [r.BOAT],
+      },
+      '0.5': {
+        type: 'ocean',
+        label: '~',
+        color: '#0000CD',
+        difficulty: 1,
+        requirements: [r.BOAT],
+      },
+      '1': {
+        type: 'shallow water',
+        label: '≋',
+        color: '#4169E1',
+        difficulty: 1,
+      },
     },
     config: {
-      terrainScale: 0.12,
+      terrainScale: 0.02,
       smallFeatureScale: 2,
       smallFeatureInfluence: 0.6,
     },
   },
-  '-0.5': {
-    name: 'Coastal',
+  coral: {
+    name: 'Coral Reef',
+    conditions: {
+      minHeight: 0.4,
+      maxHeight: 0.6,
+      minTemp: 0.7,
+      requiresAdjacent: ['Ocean'],
+      searchRadius: 2,
+    },
     terrainTypes: {
-      '-0.8': { type: 'bay', label: '~', color: '#4169E1' }, // Reuse wave symbol
-      '-0.5': { type: 'beach', label: '·', color: '#F0E68C' }, // Small dot for sand
-      '0.2': { type: 'dunes', label: '︵', color: '#DEB887' }, // Wave-like for dunes
-      '1.0': { type: 'cliffs', label: '≡', color: '#A0522D' }, // Parallel lines for cliffs
+      '-0.5': {
+        type: 'coral reef',
+        label: '░',
+        color: '#20B2AA',
+        difficulty: 1,
+        requirements: [r.BOAT],
+      },
     },
     config: {
-      terrainScale: 0.1,
+      terrainScale: 0.01,
       smallFeatureScale: 2,
       smallFeatureInfluence: 0.4,
     },
   },
-  '0.0': {
-    name: 'Plains',
+  coast: {
+    name: 'Coastal',
+    conditions: {
+      minHeight: 0.35,
+      maxHeight: 0.45,
+      requiresAdjacent: ['Ocean'],
+      searchRadius: 3,
+    },
     terrainTypes: {
-      '-0.8': { type: 'lake', label: '~', color: '#4169E1' }, // Reuse wave symbol
-      '-0.5': { type: 'marsh', label: '♠', color: '#2E8B57' }, // Club suit for vegetation
-      '0.5': { type: 'grassland', label: '"', color: '#90EE90' }, // Quote for grass
-      '1.0': { type: 'hills', label: '⌢', color: '#228B22' }, // Arc for hills
+      '-0.8': { type: 'bay', label: '~', color: '#4169E1', difficulty: 1 },
+      '-0.5': { type: 'beach', label: '·', color: '#F0E68C', difficulty: 1 },
+      '0.2': { type: 'dunes', label: '︵', color: '#DEB887', difficulty: 1 },
+      '1.0': { type: 'cliffs', label: '≡', color: '#A0522D', difficulty: 1 },
     },
     config: {
-      terrainScale: 0.08,
+      terrainScale: 0.01,
+      smallFeatureScale: 2,
+      smallFeatureInfluence: 0.4,
+    },
+  },
+  desert: {
+    name: 'Desert',
+    conditions: {
+      minHeight: 0.4,
+      maxHeight: 0.6,
+      minTemp: 0.7,
+      maxMoisture: 0.3,
+      requiresAdjacent: ['Coastal', 'Plains'],
+      searchRadius: 5,
+    },
+    terrainTypes: {
+      '-0.5': { type: 'desert', label: '∴', color: '#D2B48C', difficulty: 1 }, // Therefore symbol for sand
+      '0.2': { type: 'dunes', label: '︵', color: '#DEB887', difficulty: 1 }, // Wave-like for dunes
+      '1.0': { type: 'canyon', label: '∎', color: '#A0522D', difficulty: 1 }, // Solid rectangle for cliffs
+    },
+    config: {
+      terrainScale: 0.01,
+      smallFeatureScale: 2,
+      smallFeatureInfluence: 0.4,
+    },
+  },
+  saltFlat: {
+    name: 'Salt Flats',
+    conditions: {
+      minHeight: 0.4,
+      maxHeight: 0.6,
+      minTemp: 0.7,
+      maxMoisture: 0.1,
+      requiresAdjacent: ['Desert'],
+      searchRadius: 3,
+    },
+    terrainTypes: {
+      '1': { type: 'salt flat', label: '□', color: '#F5F5F5', difficulty: 1 }, // Square for salt
+    },
+    config: {
+      terrainScale: 0.01,
+      smallFeatureScale: 2,
+      smallFeatureInfluence: 0.4,
+    },
+  },
+
+  plains: {
+    name: 'Plains',
+    conditions: {
+      minHeight: 0.4,
+      maxHeight: 0.6,
+      minTemp: 0.3,
+      maxMoisture: 0.7,
+      requiresAdjacent: ['Coastal'],
+      searchRadius: 3,
+    },
+    terrainTypes: {
+      '-0.8': { type: 'lake', label: '~', color: '#4169E1', difficulty: 1 }, // Reuse wave symbol
+      '-0.5': { type: 'marsh', label: '♠', color: '#2E8B57', difficulty: 1 }, // Club suit for vegetation
+      '0.5': { type: 'grassland', label: '"', color: '#90EE90', difficulty: 1 }, // Quote for grass
+      '1.0': { type: 'hills', label: '⌢', color: '#228B22', difficulty: 1 }, // Arc for hills
+    },
+    config: {
+      terrainScale: 0.008,
       smallFeatureScale: 3,
       smallFeatureInfluence: 0.3,
     },
   },
-  '0.6': {
+  forest: {
     name: 'Forest',
+    conditions: {
+      minHeight: 0.4,
+      maxHeight: 0.6,
+      minTemp: 0.3,
+      maxMoisture: 0.8,
+      requiresAdjacent: ['Plains'],
+      searchRadius: 3,
+    },
     terrainTypes: {
-      '-0.8': { type: 'pond', label: '~', color: '#4169E1' }, // Reuse wave symbol
-      '-0.5': { type: 'undergrowth', label: ',', color: '#228B22' }, // Comma for small plants
-      '0.5': { type: 'woods', label: '♣', color: '#006400' }, // Club for trees
-      '1.0': { type: 'dense forest', label: '♠', color: '#004200' }, // Spade for thick forest
+      '-0.8': {
+        type: 'pond',
+        label: '~',
+        color: '#4169E1',
+        difficulty: 1,
+        requirements: [r.BOAT],
+      }, // Reuse wave symbol
+      '-0.5': {
+        type: 'undergrowth',
+        label: ',',
+        color: '#228B22',
+        difficulty: 1,
+      }, // Comma for small plants
+      '0.5': { type: 'woods', label: '♣', color: '#006400', difficulty: 1 }, // Club for trees
+      '1.0': {
+        type: 'dense forest',
+        label: '♠',
+        color: '#004200',
+        difficulty: 1,
+        requirements: [r.CUT],
+      }, // Spade for thick forest
     },
     config: {
-      terrainScale: 0.1,
+      terrainScale: 0.01,
       smallFeatureScale: 2,
       smallFeatureInfluence: 0.5,
     },
   },
-  '0.85': {
+  mountains: {
     name: 'Mountains',
+    conditions: {
+      minHeight: 0.6,
+      maxHeight: 0.8,
+      maxTemp: 0.3,
+    },
     terrainTypes: {
-      '-0.8': { type: 'valley', label: 'v', color: '#4169E1' }, // V for valley
-      '-0.5': { type: 'foothills', label: '⌢', color: '#A0522D' }, // Reuse arc for hills
-      '0.5': { type: 'peaks', label: '△', color: '#808080' }, // Triangle outline for peaks
-      '1.0': { type: 'summit', label: '▲', color: '#696969' }, // Solid triangle for high peaks
+      '-0.8': { type: 'valley', label: 'v', color: '#4169E1', difficulty: 1 }, // V for valley
+      '-0.5': {
+        type: 'foothills',
+        label: '⌢',
+        color: '#A0522D',
+        difficulty: 1,
+      }, // Reuse arc for hills
+      '0.5': {
+        type: 'peaks',
+        label: '△',
+        color: '#808080',
+        difficulty: 1,
+        requirements: [r.CLIMB],
+      }, // Triangle outline for peaks
+      '1.0': {
+        type: 'summit',
+        label: '▲',
+        color: '#696969',
+        difficulty: 1,
+        requirements: [r.CLIMB],
+      }, // Solid triangle for high peaks
     },
     config: {
-      terrainScale: 0.1,
+      terrainScale: 0.01,
       smallFeatureScale: 2,
       smallFeatureInfluence: 0.6,
     },
   },
-  '1.0': {
+  alpine: {
     name: 'Alpine',
+    conditions: {
+      minHeight: 0.8,
+      maxTemp: 0.3,
+    },
     terrainTypes: {
-      '-0.8': { type: 'glacier lake', label: '≋', color: '#B0E0E6' }, // Reuse ripple
-      '-0.5': { type: 'ice field', label: '❄', color: '#E0FFFF' }, // Snowflake
-      '0.5': { type: 'peaks', label: '△', color: '#A9A9A9' }, // Reuse triangle outline
-      '1.0': { type: 'eternal snow', label: '※', color: 'white' }, // Asterisk for snow
+      '-0.8': {
+        type: 'glacier lake',
+        label: '≋',
+        color: '#B0E0E6',
+        difficulty: 1,
+      }, // Reuse ripple
+      '-0.5': {
+        type: 'ice field',
+        label: '❄',
+        color: '#E0FFFF',
+        difficulty: 1,
+      }, // Snowflake
+      '0.5': {
+        type: 'peaks',
+        label: '△',
+        color: '#A9A9A9',
+        difficulty: 1,
+        requirements: [r.CLIMB],
+      }, // Reuse triangle outline
+      '1.0': {
+        type: 'eternal snow',
+        label: '※',
+        color: 'white',
+        difficulty: 1,
+        requirements: [r.CLIMB],
+      }, // Asterisk for snow
     },
     config: {
-      terrainScale: 0.05,
+      terrainScale: 0.005,
       smallFeatureScale: 4,
       smallFeatureInfluence: 0.7,
+    },
+  },
+  oasis: {
+    name: 'Oasis',
+    conditions: {
+      minHeight: 0.45,
+      maxHeight: 0.55,
+      minTemp: 0.8,
+      maxMoisture: 0.4,
+      requiresAdjacent: ['Desert'],
+      searchRadius: 8, // Must be in a desert region
+    },
+    terrainTypes: {
+      '1.0': { type: 'oasis', label: '≈', color: '#4169E1', difficulty: 1 }, // Sun for oasis
+    },
+    config: {
+      terrainScale: 0.01,
+      smallFeatureScale: 2,
+      smallFeatureInfluence: 0.4,
+    },
+  },
+  volcanicIsland: {
+    name: 'Volcanic Island',
+    conditions: {
+      minHeight: 0.7,
+      minTemp: 0.8,
+      requiresAdjacent: ['Ocean'],
+      searchRadius: 2, // Must be completely surrounded by ocean
+    },
+    terrainTypes: {
+      '-0.8': {
+        type: 'volcanic beach',
+        label: '·',
+        color: '#1a1a1a',
+        difficulty: 1,
+      },
+      '0.8': {
+        type: 'volcanic rock',
+        label: '♨',
+        color: '#2d2d2d',
+        difficulty: 1,
+      },
+      '1': { type: 'lava flows', label: '≋', color: '#ff4400', difficulty: 1 },
+    },
+    config: {
+      terrainScale: 0.01,
+      smallFeatureScale: 2,
+      smallFeatureInfluence: 0.4,
     },
   },
 }
