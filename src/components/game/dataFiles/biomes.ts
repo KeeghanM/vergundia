@@ -9,22 +9,22 @@ export const biomes: BiomeMap = {
     terrainTypes: {
       '-0.7': {
         type: 'deep ocean',
-        label: '≈',
-        color: '#000080',
+        label: '≋',
+        color: '#000066',
         difficulty: 1,
         requirements: [r.BOAT],
       },
       '0.2': {
         type: 'ocean',
         label: '~',
-        color: '#0000CD',
+        color: '#000099',
         difficulty: 1,
         requirements: [r.BOAT],
       },
       '1': {
         type: 'shallow water',
-        label: '≋',
-        color: '#4169E1',
+        label: '░',
+        color: '#0000CC',
         difficulty: 1,
       },
     },
@@ -44,7 +44,7 @@ export const biomes: BiomeMap = {
       searchRadius: 2,
     },
     terrainTypes: {
-      '-0.5': {
+      '1': {
         type: 'coral reef',
         label: '░',
         color: '#20B2AA',
@@ -68,9 +68,9 @@ export const biomes: BiomeMap = {
     },
     terrainTypes: {
       '-0.8': { type: 'bay', label: '~', color: '#4169E1', difficulty: 1 },
-      '-0.5': { type: 'beach', label: '·', color: '#F0E68C', difficulty: 1 },
-      '0.2': { type: 'dunes', label: '︵', color: '#DEB887', difficulty: 1 },
-      '1.0': { type: 'cliffs', label: '≡', color: '#A0522D', difficulty: 1 },
+      '-0.5': { type: 'beach', label: '·', color: '#DEB887', difficulty: 1 },
+      '0.2': { type: 'dunes', label: 'n', color: '#D2B48C', difficulty: 1 },
+      '1.0': { type: 'cliffs', label: '#', color: '#A0522D', difficulty: 1 },
     },
     config: {
       terrainScale: 0.01,
@@ -89,9 +89,9 @@ export const biomes: BiomeMap = {
       searchRadius: 4,
     },
     terrainTypes: {
-      '-0.6': { type: 'desert', label: '∴', color: '#D2B48C', difficulty: 1 },
-      '0.3': { type: 'dunes', label: '︵', color: '#DEB887', difficulty: 1 },
-      '1.0': { type: 'canyon', label: '∎', color: '#A0522D', difficulty: 1 },
+      '-0.6': { type: 'desert', label: '·', color: '#DAA520', difficulty: 1 },
+      '0.3': { type: 'dunes', label: 'n', color: '#DEB887', difficulty: 1 },
+      '1.0': { type: 'canyon', label: '=', color: '#A0522D', difficulty: 1 },
     },
     config: {
       terrainScale: 0.01,
@@ -110,7 +110,7 @@ export const biomes: BiomeMap = {
       searchRadius: 3,
     },
     terrainTypes: {
-      '1': { type: 'salt flat', label: '□', color: '#F5F5F5', difficulty: 1 },
+      '1': { type: 'salt flat', label: '_', color: '#FFF', difficulty: 1 },
     },
     config: {
       terrainScale: 0.01,
@@ -136,9 +136,9 @@ export const biomes: BiomeMap = {
         difficulty: 1,
         requirements: [r.BOAT],
       },
-      '-0.5': { type: 'marsh', label: '♠', color: '#2E8B57', difficulty: 1 },
-      '0.5': { type: 'grassland', label: '"', color: '#90EE90', difficulty: 1 },
-      '1.0': { type: 'hills', label: '⌢', color: '#228B22', difficulty: 1 },
+      '-0.5': { type: 'marsh', label: '"', color: '#2E8B57', difficulty: 1 },
+      '0.5': { type: 'grassland', label: "'", color: '#90EE90', difficulty: 1 },
+      '1.0': { type: 'hills', label: 'n', color: '#228B22', difficulty: 1 },
     },
     config: {
       terrainScale: 2,
@@ -162,18 +162,18 @@ export const biomes: BiomeMap = {
         label: '~',
         color: '#4169E1',
         difficulty: 1,
-        requirements: [r.BOAT],
+        requirements: [r.SWIM],
       },
       '-0.5': {
         type: 'undergrowth',
-        label: ',',
+        label: '"',
         color: '#228B22',
         difficulty: 1,
       },
-      '0.5': { type: 'woods', label: '♣', color: '#006400', difficulty: 1 },
+      '0.5': { type: 'woods', label: 'Y', color: '#006400', difficulty: 1 },
       '1.0': {
         type: 'dense forest',
-        label: '♠',
+        label: '#',
         color: '#004200',
         difficulty: 1,
         requirements: [r.CUT],
@@ -195,24 +195,24 @@ export const biomes: BiomeMap = {
       searchRadius: 2,
     },
     terrainTypes: {
-      '-0.8': { type: 'valley', label: 'v', color: '#4169E1', difficulty: 1 },
+      '-0.8': { type: 'valley', label: 'v', color: '#696969', difficulty: 1 },
       '-0.3': {
         type: 'foothills',
-        label: '⌢',
-        color: '#A0522D',
+        label: 'n',
+        color: '#808080',
         difficulty: 1,
       },
       '0.8': {
         type: 'peaks',
-        label: '△',
-        color: '#808080',
+        label: 'A',
+        color: '#A9A9A9',
         difficulty: 1,
         requirements: [r.CLIMB],
       },
       '1.0': {
         type: 'summit',
-        label: '▲',
-        color: '#696969',
+        label: 'M',
+        color: '#D3D3D3',
         difficulty: 1,
         requirements: [r.CLIMB],
       },
@@ -234,27 +234,27 @@ export const biomes: BiomeMap = {
     terrainTypes: {
       '-0.8': {
         type: 'glacier lake',
-        label: '≋',
+        label: '~',
         color: '#B0E0E6',
         difficulty: 1,
       },
       '-0.5': {
         type: 'ice field',
-        label: '❄',
+        label: '*',
         color: '#E0FFFF',
         difficulty: 1,
       },
       '0.5': {
         type: 'peaks',
-        label: '△',
-        color: '#A9A9A9',
+        label: 'A',
+        color: '#DCDCDC',
         difficulty: 1,
         requirements: [r.CLIMB],
       },
       '1.0': {
         type: 'eternal snow',
-        label: '※',
-        color: 'white',
+        label: '^',
+        color: '#FFF',
         difficulty: 1,
         requirements: [r.CLIMB],
       },
@@ -275,7 +275,7 @@ export const biomes: BiomeMap = {
       searchRadius: 4,
     },
     terrainTypes: {
-      '1.0': { type: 'oasis', label: '≈', color: '#4169E1', difficulty: 1 },
+      '1.0': { type: 'oasis', label: 'o', color: '#40E0D0', difficulty: 1 },
     },
     config: {
       terrainScale: 0.01,
@@ -300,11 +300,11 @@ export const biomes: BiomeMap = {
       },
       '0.8': {
         type: 'volcanic rock',
-        label: '♨',
+        label: '^',
         color: '#2d2d2d',
         difficulty: 1,
       },
-      '1': { type: 'lava flows', label: '≋', color: '#ff4400', difficulty: 1 },
+      '1': { type: 'lava flows', label: '%', color: '#ff4400', difficulty: 1 },
     },
     config: {
       terrainScale: 0.01,
