@@ -93,11 +93,6 @@ export class Game {
   }
 
   private draw() {
-    // Update player position in world for cache optimization
-    const { x: playerX, y: playerY } = this.player.getPosition()
-    this.world.updatePlayerPosition(playerX, playerY)
-
-    //
     const screenCenterX = Math.floor(this.cellsAcross / 2)
     const screenCenterY = Math.floor(this.cellsDown / 2)
 

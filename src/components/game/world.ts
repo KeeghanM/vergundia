@@ -12,8 +12,6 @@ export class World {
   private heightDetailNoise: NoiseGenerator
   private temperatureNoise: NoiseGenerator
   private moistureNoise: NoiseGenerator
-  private playerX = 0
-  private playerY = 0
 
   // Caching
   private readonly CHUNK_SIZE = 32 // Must be power of 2 for bit operations
@@ -21,25 +19,23 @@ export class World {
   private chunks: Map<string, ChunkCache>
 
   constructor() {
-    // Initialize noise generators without scales - we'll apply scales when sampling
-    this.heightNoise = new NoiseGenerator({ scale: 0.008 })
-    this.heightDetailNoise = new NoiseGenerator({ scale: 2, influence: 0.8 })
-    this.temperatureNoise = new NoiseGenerator({
-      scale: 0.05,
-    })
-    this.moistureNoise = new NoiseGenerator({ scale: 0.5 })
+    // Initialize noise generators without scales
+    // Make base height variations much more gradual for continent-like features
+    this.heightNoise = new NoiseGenerator({ scale: 0.002 })
 
+    // Increase detail noise to create more interesting local variations
+    // But keep influence low to avoid breaking up the large features
+    this.heightDetailNoise = new NoiseGenerator({ scale: 0.1, influence: 0.5 })
+
+    // Make temperature and moisture even more gradual to create larger climate zones
+    this.temperatureNoise = new NoiseGenerator({ scale: 0.01 })
+    this.moistureNoise = new NoiseGenerator({ scale: 0.015 })
     this.biomeSystems = Object.values(biomes).map((biome) => ({
       biome,
       terrainSystem: new TerrainSystem(biome.terrainTypes),
     }))
 
     this.chunks = new Map()
-  }
-
-  updatePlayerPosition(x: number, y: number) {
-    this.playerX = x
-    this.playerY = y
   }
 
   private getChunkKey(x: number, y: number): string {

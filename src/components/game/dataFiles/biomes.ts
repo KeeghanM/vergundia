@@ -37,8 +37,8 @@ export const biomes: BiomeMap = {
   coral: {
     name: 'Coral Reef',
     conditions: {
-      minHeight: 0.4,
-      maxHeight: 0.6,
+      minHeight: 0.2,
+      maxHeight: 0.4,
       minTemp: 0.7,
       requiresAdjacent: ['Ocean'],
       searchRadius: 2,
@@ -85,13 +85,13 @@ export const biomes: BiomeMap = {
       maxHeight: 0.6,
       minTemp: 0.7,
       maxMoisture: 0.3,
-      requiresAdjacent: ['Coastal', 'Plains'],
-      searchRadius: 5,
+      requiresAdjacent: ['Coastal', 'Plains', 'Desert'],
+      searchRadius: 3,
     },
     terrainTypes: {
-      '-0.5': { type: 'desert', label: '∴', color: '#D2B48C', difficulty: 1 }, // Therefore symbol for sand
-      '0.2': { type: 'dunes', label: '︵', color: '#DEB887', difficulty: 1 }, // Wave-like for dunes
-      '1.0': { type: 'canyon', label: '∎', color: '#A0522D', difficulty: 1 }, // Solid rectangle for cliffs
+      '-0.5': { type: 'desert', label: '∴', color: '#D2B48C', difficulty: 1 },
+      '0.2': { type: 'dunes', label: '︵', color: '#DEB887', difficulty: 1 },
+      '1.0': { type: 'canyon', label: '∎', color: '#A0522D', difficulty: 1 },
     },
     config: {
       terrainScale: 0.01,
@@ -110,7 +110,7 @@ export const biomes: BiomeMap = {
       searchRadius: 3,
     },
     terrainTypes: {
-      '1': { type: 'salt flat', label: '□', color: '#F5F5F5', difficulty: 1 }, // Square for salt
+      '1': { type: 'salt flat', label: '□', color: '#F5F5F5', difficulty: 1 },
     },
     config: {
       terrainScale: 0.01,
@@ -130,13 +130,13 @@ export const biomes: BiomeMap = {
       searchRadius: 3,
     },
     terrainTypes: {
-      '-0.8': { type: 'lake', label: '~', color: '#4169E1', difficulty: 1 }, // Reuse wave symbol
-      '-0.5': { type: 'marsh', label: '♠', color: '#2E8B57', difficulty: 1 }, // Club suit for vegetation
-      '0.5': { type: 'grassland', label: '"', color: '#90EE90', difficulty: 1 }, // Quote for grass
-      '1.0': { type: 'hills', label: '⌢', color: '#228B22', difficulty: 1 }, // Arc for hills
+      '-0.8': { type: 'lake', label: '~', color: '#4169E1', difficulty: 1 },
+      '-0.5': { type: 'marsh', label: '♠', color: '#2E8B57', difficulty: 1 },
+      '0.5': { type: 'grassland', label: '"', color: '#90EE90', difficulty: 1 },
+      '1.0': { type: 'hills', label: '⌢', color: '#228B22', difficulty: 1 },
     },
     config: {
-      terrainScale: 0.008,
+      terrainScale: 2,
       smallFeatureScale: 3,
       smallFeatureInfluence: 0.3,
     },
@@ -147,9 +147,9 @@ export const biomes: BiomeMap = {
       minHeight: 0.4,
       maxHeight: 0.6,
       minTemp: 0.3,
-      maxMoisture: 0.8,
-      requiresAdjacent: ['Plains'],
-      searchRadius: 3,
+      minMoisture: 0.6,
+      requiresAdjacent: ['Plains', 'Forest'],
+      searchRadius: 2,
     },
     terrainTypes: {
       '-0.8': {
@@ -158,21 +158,21 @@ export const biomes: BiomeMap = {
         color: '#4169E1',
         difficulty: 1,
         requirements: [r.BOAT],
-      }, // Reuse wave symbol
+      },
       '-0.5': {
         type: 'undergrowth',
         label: ',',
         color: '#228B22',
         difficulty: 1,
-      }, // Comma for small plants
-      '0.5': { type: 'woods', label: '♣', color: '#006400', difficulty: 1 }, // Club for trees
+      },
+      '0.5': { type: 'woods', label: '♣', color: '#006400', difficulty: 1 },
       '1.0': {
         type: 'dense forest',
         label: '♠',
         color: '#004200',
         difficulty: 1,
         requirements: [r.CUT],
-      }, // Spade for thick forest
+      },
     },
     config: {
       terrainScale: 0.01,
@@ -185,30 +185,32 @@ export const biomes: BiomeMap = {
     conditions: {
       minHeight: 0.6,
       maxHeight: 0.8,
-      maxTemp: 0.3,
+      maxTemp: 0.4,
+      requiresAdjacent: ['Mountain'],
+      searchRadius: 2,
     },
     terrainTypes: {
-      '-0.8': { type: 'valley', label: 'v', color: '#4169E1', difficulty: 1 }, // V for valley
+      '-0.8': { type: 'valley', label: 'v', color: '#4169E1', difficulty: 1 },
       '-0.5': {
         type: 'foothills',
         label: '⌢',
         color: '#A0522D',
         difficulty: 1,
-      }, // Reuse arc for hills
+      },
       '0.5': {
         type: 'peaks',
         label: '△',
         color: '#808080',
         difficulty: 1,
         requirements: [r.CLIMB],
-      }, // Triangle outline for peaks
+      },
       '1.0': {
         type: 'summit',
         label: '▲',
         color: '#696969',
         difficulty: 1,
         requirements: [r.CLIMB],
-      }, // Solid triangle for high peaks
+      },
     },
     config: {
       terrainScale: 0.01,
@@ -228,27 +230,27 @@ export const biomes: BiomeMap = {
         label: '≋',
         color: '#B0E0E6',
         difficulty: 1,
-      }, // Reuse ripple
+      },
       '-0.5': {
         type: 'ice field',
         label: '❄',
         color: '#E0FFFF',
         difficulty: 1,
-      }, // Snowflake
+      },
       '0.5': {
         type: 'peaks',
         label: '△',
         color: '#A9A9A9',
         difficulty: 1,
         requirements: [r.CLIMB],
-      }, // Reuse triangle outline
+      },
       '1.0': {
         type: 'eternal snow',
         label: '※',
         color: 'white',
         difficulty: 1,
         requirements: [r.CLIMB],
-      }, // Asterisk for snow
+      },
     },
     config: {
       terrainScale: 0.005,
@@ -264,10 +266,10 @@ export const biomes: BiomeMap = {
       minTemp: 0.8,
       maxMoisture: 0.4,
       requiresAdjacent: ['Desert'],
-      searchRadius: 8, // Must be in a desert region
+      searchRadius: 8,
     },
     terrainTypes: {
-      '1.0': { type: 'oasis', label: '≈', color: '#4169E1', difficulty: 1 }, // Sun for oasis
+      '1.0': { type: 'oasis', label: '≈', color: '#4169E1', difficulty: 1 },
     },
     config: {
       terrainScale: 0.01,
@@ -281,7 +283,7 @@ export const biomes: BiomeMap = {
       minHeight: 0.7,
       minTemp: 0.8,
       requiresAdjacent: ['Ocean'],
-      searchRadius: 2, // Must be completely surrounded by ocean
+      searchRadius: 2,
     },
     terrainTypes: {
       '-0.8': {
