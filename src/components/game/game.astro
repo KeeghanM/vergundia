@@ -1,0 +1,38 @@
+---
+
+---
+
+<div id="game"></div>
+
+<script>
+  import { biomes } from './dataFiles/biomes'
+  import { Canvas } from '../../lib/canvas'
+  import { World } from './world'
+  import { Game } from './game.ts'
+
+  const WIDTH = document.body.clientWidth
+  const HEIGHT = document.body.clientHeight
+
+  const canvas = new Canvas('#game', WIDTH, HEIGHT)
+  const world = new World(biomes, {
+    baseTerrainScale: 0.08,
+    biomeScale: 0.005,
+    biomeFineScale: 0.09,
+    biomeFineInfluence: 0.2,
+  })
+
+  const game = new Game({
+    canvas,
+    world,
+    width: WIDTH,
+    height: HEIGHT,
+  })
+
+  // Start the game
+  game.start()
+
+  // Clean up when needed
+  window.addEventListener('beforeunload', () => {
+    game.destroy()
+  })
+</script>
