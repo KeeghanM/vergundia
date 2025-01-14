@@ -11,7 +11,9 @@ export class World {
   private heightNoise: NoiseGenerator
   private heightDetailNoise: NoiseGenerator
   private temperatureNoise: NoiseGenerator
+  private temperatureDetailNoise: NoiseGenerator
   private moistureNoise: NoiseGenerator
+  private moistureDetailNoise: NoiseGenerator
 
   // Caching
   private readonly CHUNK_SIZE = 32 // Must be power of 2 for bit operations
@@ -20,16 +22,19 @@ export class World {
 
   constructor() {
     // Initialize noise generators without scales
-    // Make base height variations much more gradual for continent-like features
     this.heightNoise = new NoiseGenerator({ scale: 0.002 })
+    this.heightDetailNoise = new NoiseGenerator({ scale: 0.8, influence: 0.2 })
 
-    // Increase detail noise to create more interesting local variations
-    // But keep influence low to avoid breaking up the large features
-    this.heightDetailNoise = new NoiseGenerator({ scale: 0.1, influence: 0.4 })
-
-    // Make temperature and moisture even more gradual to create larger climate zones
     this.temperatureNoise = new NoiseGenerator({ scale: 0.005 })
+    this.temperatureDetailNoise = new NoiseGenerator({
+      scale: 0.8,
+      influence: 0.2,
+    })
     this.moistureNoise = new NoiseGenerator({ scale: 0.008 })
+    this.moistureDetailNoise = new NoiseGenerator({
+      scale: 0.8,
+      influence: 0.2,
+    })
 
     // Initialize biome systems
     this.biomeSystems = Object.values(biomes).map((biome) => ({
@@ -87,8 +92,13 @@ export class World {
 
   private getEnvironmentConditions(x: number, y: number) {
     // Temperature and moisture stay the same (biome-level)
-    const temp = this.normalizeTerrain(this.temperatureNoise.getValue(x, y))
-    const moisture = this.normalizeTerrain(this.moistureNoise.getValue(x, y))
+    const baseTemp = this.temperatureNoise.getValue(x, y)
+    const detailTemp = this.temperatureDetailNoise.getValue(x, y) * 0.5
+    const temp = this.normalizeTerrain(baseTemp + detailTemp)
+
+    const baseMoisture = this.moistureNoise.getValue(x, y)
+    const detailMoisture = this.moistureDetailNoise.getValue(x, y) * 0.5
+    const moisture = this.normalizeTerrain(baseMoisture + detailMoisture)
 
     // Height now uses default scales for biome selection
     const baseHeight = this.heightNoise.getValue(x, y)

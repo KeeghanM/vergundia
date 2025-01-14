@@ -118,6 +118,25 @@ export const biomes: BiomeMap = {
       smallFeatureInfluence: 0.4,
     },
   },
+  marsh: {
+    name: 'Marsh',
+    conditions: {
+      minHeight: 0.3,
+      maxHeight: 0.5,
+      minTemp: 0.4,
+      minMoisture: 0.65,
+      requiresAdjacent: ['Coastal', 'Plains', 'Marsh'],
+      searchRadius: 3,
+    },
+    terrainTypes: {
+      '1': { type: 'marsh', label: '"', color: '#2E8B57', difficulty: 1 },
+    },
+    config: {
+      terrainScale: 0.01,
+      smallFeatureScale: 2,
+      smallFeatureInfluence: 0.4,
+    },
+  },
   plains: {
     name: 'Plains',
     conditions: {
@@ -136,8 +155,7 @@ export const biomes: BiomeMap = {
         difficulty: 1,
         requirements: [r.BOAT],
       },
-      '-0.5': { type: 'marsh', label: '"', color: '#2E8B57', difficulty: 1 },
-      '0.5': { type: 'grassland', label: "'", color: '#90EE90', difficulty: 1 },
+      '0.5': { type: 'grassland', label: ',', color: '#90EE90', difficulty: 1 },
       '1.0': { type: 'hills', label: 'n', color: '#228B22', difficulty: 1 },
     },
     config: {
