@@ -1,11 +1,14 @@
 import type { Canvas } from '../../lib/canvas'
-import type { Requirement } from './index.t'
+import type { Requirement, Terrain } from './index.t'
 import type { World } from './world'
 
 export class Player {
   public x: number
   public y: number
   public abilities: Set<Requirement>
+  public currentTerrain: Terrain | null
+  public currentBiome: string | null
+
   private color: string
   private symbol: string
 
@@ -15,6 +18,8 @@ export class Player {
     this.color = 'red'
     this.symbol = '@'
     this.abilities = new Set()
+    this.currentTerrain = null
+    this.currentBiome = null
   }
 
   move(dx: number, dy: number) {

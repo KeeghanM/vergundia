@@ -10,8 +10,6 @@ export class Game {
   private cellsAcross: number
   private cellsDown: number
   private isActive: boolean
-  private centerX: number
-  private centerY: number
 
   constructor(config: GameConfig) {
     this.canvas = config.canvas
@@ -20,8 +18,6 @@ export class Game {
     this.cellsAcross = Math.floor(config.width / this.canvas.fontSize)
     this.cellsDown = Math.floor(config.height / this.canvas.fontSize)
     this.isActive = false
-    this.centerX = Math.round(config.width / 2)
-    this.centerY = Math.round(config.height / 2)
 
     this.setupEventListeners()
   }
@@ -97,6 +93,11 @@ export class Game {
   }
 
   private draw() {
+    // Update player position in world for cache optimization
+    const { x: playerX, y: playerY } = this.player.getPosition()
+    this.world.updatePlayerPosition(playerX, playerY)
+
+    //
     const screenCenterX = Math.floor(this.cellsAcross / 2)
     const screenCenterY = Math.floor(this.cellsDown / 2)
 
@@ -106,10 +107,16 @@ export class Game {
     this.canvas.setFont(16, 'ui-monospace')
     for (let screenX = 0; screenX < this.cellsAcross; screenX++) {
       for (let screenY = 0; screenY < this.cellsDown; screenY++) {
-        if (screenX === screenCenterX && screenY === screenCenterY) continue
-
         const { x: worldX, y: worldY } = this.screenToWorld(screenX, screenY)
-        const { terrain } = this.world.getTerrain(worldX, worldY)
+        const { terrain, biomeName } = this.world.getTerrain(worldX, worldY)
+
+        if (screenX === screenCenterX && screenY === screenCenterY) {
+          // Cache players current terrain
+          this.player.currentTerrain = terrain
+          this.player.currentBiome = biomeName
+
+          continue // Skip player position for rendering
+        }
 
         this.canvas.setColor(terrain.color)
         this.canvas.text(
@@ -129,14 +136,12 @@ export class Game {
     )
 
     // Draw UI
-    const { x: playerX, y: playerY } = this.player.getPosition()
-    this.drawUI(playerX, playerY)
+    this.drawUI()
   }
 
-  private drawUI(playerX: number, playerY: number) {
-    const playerTerrain = this.world.getTerrain(playerX, playerY)
-    const uiText = `Biome: ${playerTerrain.biomeName}
-    Terrain: ${playerTerrain.terrain.type}`
+  private drawUI() {
+    const uiText = `Biome: ${this.player.currentBiome}
+    Terrain: ${this.player.currentTerrain?.type}`
     const lines = uiText.split('\n').length
 
     this.canvas.setColor('white')

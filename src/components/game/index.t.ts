@@ -60,3 +60,11 @@ export type GameConfig = {
   width: number
   height: number
 }
+export type ChunkCache = {
+  terrainData: Array<
+    Array<{
+      terrain: Terrain
+      biomeName: string
+    }>
+  >
+}

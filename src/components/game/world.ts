@@ -1,4 +1,4 @@
-import type { Biome, BiomeConfig } from './index.t'
+import type { Biome, BiomeConfig, ChunkCache } from './index.t'
 import { NoiseGenerator } from '../../lib/noiseGenerator'
 import { TerrainSystem } from './terrainSystem'
 import { biomes } from './dataFiles/biomes'
@@ -12,6 +12,13 @@ export class World {
   private heightDetailNoise: NoiseGenerator
   private temperatureNoise: NoiseGenerator
   private moistureNoise: NoiseGenerator
+  private playerX = 0
+  private playerY = 0
+
+  // Caching
+  private readonly CHUNK_SIZE = 32 // Must be power of 2 for bit operations
+  private readonly CHUNK_MASK = this.CHUNK_SIZE - 1 // For fast modulo
+  private chunks: Map<string, ChunkCache>
 
   constructor() {
     // Initialize noise generators without scales - we'll apply scales when sampling
@@ -26,6 +33,31 @@ export class World {
       biome,
       terrainSystem: new TerrainSystem(biome.terrainTypes),
     }))
+
+    this.chunks = new Map()
+  }
+
+  updatePlayerPosition(x: number, y: number) {
+    this.playerX = x
+    this.playerY = y
+  }
+
+  private getChunkKey(x: number, y: number): string {
+    // Faster than string concatenation with template literals
+    return (x >> 5) + ',' + (y >> 5) // Divide by CHUNK_SIZE using bit shift
+  }
+
+  private getLocalCoords(x: number, y: number): [number, number] {
+    // Fast modulo using bitwise AND with mask
+    return [x & this.CHUNK_MASK, y & this.CHUNK_MASK]
+  }
+
+  cleanCache() {
+    if (this.chunks.size > 32) {
+      // Keep last 16 chunks
+      const oldestKeys = Array.from(this.chunks.keys()).slice(0, 4)
+      oldestKeys.forEach((key) => this.chunks.delete(key))
+    }
   }
 
   private normalizeTerrain(value: number): number {
@@ -70,24 +102,57 @@ export class World {
   }
 
   getTerrain(x: number, y: number) {
-    // First get environment conditions using default scales (for biome selection)
-    const { height, temp, moisture } = this.getEnvironmentConditions(x, y)
-    const { biome, terrainSystem } = this.getBiomeForConditions(
-      x,
-      y,
-      height,
-      temp,
-      moisture
-    )
+    const chunkKey = this.getChunkKey(x, y)
+    let chunk = this.chunks.get(chunkKey)
 
-    // Then get terrain value using biome-specific scales
-    const terrainValue = this.getTerrainValue(x, y, biome.config)
-
-    return {
-      terrain: terrainSystem.getTerrainForValue(terrainValue),
-      biomeName: biome.name,
-      debugInfo: { height, temp, moisture },
+    if (chunk) {
+      const [localX, localY] = this.getLocalCoords(x, y)
+      return chunk.terrainData[localX][localY]
     }
+
+    // If chunk doesn't exist, generate it
+    chunk = {
+      terrainData: Array(this.CHUNK_SIZE)
+        .fill(null)
+        .map(() => Array(this.CHUNK_SIZE).fill(null)),
+    }
+
+    // Calculate chunk origin
+    const chunkX = (x >> 5) << 5 // Multiply and divide by CHUNK_SIZE using bit shifts
+    const chunkY = (y >> 5) << 5
+
+    // Generate all terrain in chunk
+    for (let dx = 0; dx < this.CHUNK_SIZE; dx++) {
+      for (let dy = 0; dy < this.CHUNK_SIZE; dy++) {
+        const worldX = chunkX + dx
+        const worldY = chunkY + dy
+
+        const { height, temp, moisture } = this.getEnvironmentConditions(
+          worldX,
+          worldY
+        )
+        const { biome, terrainSystem } = this.getBiomeForConditions(
+          worldX,
+          worldY,
+          height,
+          temp,
+          moisture
+        )
+
+        const terrainValue = this.getTerrainValue(worldX, worldY, biome.config)
+        chunk.terrainData[dx][dy] = {
+          terrain: terrainSystem.getTerrainForValue(terrainValue),
+          biomeName: biome.name,
+        }
+      }
+    }
+
+    // Store chunk
+    this.chunks.set(chunkKey, chunk)
+
+    // Return requested terrain
+    const [localX, localY] = this.getLocalCoords(x, y)
+    return chunk.terrainData[localX][localY]
   }
 
   private checkAdjacentBiomes(
