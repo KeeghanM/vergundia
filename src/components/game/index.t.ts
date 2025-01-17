@@ -10,6 +10,20 @@ export enum Requirement {
   CUT = 'cut',
 }
 
+export enum PlayerCondition {
+  POISONED = 'poisoned',
+  BURNED = 'burned',
+  FROZEN = 'frozen',
+  SLEEPING = 'sleeping',
+  CONFUSED = 'confused',
+  TIRED = 'tired',
+  EXHAUSTED = 'exhausted',
+  HUNGRY = 'hungry',
+  STARVING = 'starving',
+  THIRSTY = 'thirsty',
+  DEHYDRATED = 'dehydrated',
+}
+
 export type Terrain = {
   type: string
   label: string
@@ -56,8 +70,8 @@ export type WorldConfig = {
   biomeFineInfluence: number
 }
 export type GameConfig = {
-  canvas: Canvas
-  world: World
+  canvasSelector: string
+  uiSelector: string
   width: number
   height: number
 }
@@ -68,4 +82,10 @@ export type ChunkCache = {
       biomeName: string
     }>
   >
+}
+
+export type Button = {
+  label: string
+  color: string
+  function: null | (() => void)
 }

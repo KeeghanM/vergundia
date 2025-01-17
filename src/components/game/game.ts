@@ -1,19 +1,21 @@
-import type { Canvas } from '../../lib/canvas'
-import type { GameConfig } from './index.t'
+import { Canvas } from '../../lib/canvas'
 import { Player } from './player'
-import type { World } from './world'
+import { World } from './world'
+import type { GameConfig } from './index.t'
+import { Window } from '../../lib/window'
 
 export class Game {
-  private canvas: Canvas
-  private world: World
-  private player: Player
+  public world: World
+  public player: Player
+  public canvas: Canvas
+
   private cellsAcross: number
   private cellsDown: number
   private isActive: boolean
 
   constructor(config: GameConfig) {
-    this.canvas = config.canvas
-    this.world = config.world
+    this.canvas = new Canvas(config.canvasSelector, config.width, config.height)
+    this.world = new World()
     this.player = new Player()
     this.cellsAcross = Math.floor(config.width / this.canvas.fontSize)
     this.cellsDown = Math.floor(config.height / this.canvas.fontSize)
@@ -35,22 +37,72 @@ export class Game {
 
     switch (e.key) {
       case 'ArrowLeft':
-        if (this.player.canMove(-1, 0, this.world)) this.player.move(-1, 0)
+        if (!this.player.canMove(-1, 0, this.world)) return
+        this.player.move(-1, 0)
+        this.encounter()
         break
       case 'ArrowRight':
-        if (this.player.canMove(1, 0, this.world)) this.player.move(1, 0)
+        if (!this.player.canMove(1, 0, this.world)) return
+        this.player.move(1, 0)
+        this.encounter()
         break
       case 'ArrowUp':
-        if (this.player.canMove(0, -1, this.world)) this.player.move(0, -1)
+        if (!this.player.canMove(0, -1, this.world)) return
+        this.player.move(0, -1)
+        this.encounter()
         break
       case 'ArrowDown':
-        if (this.player.canMove(0, 1, this.world)) this.player.move(0, 1)
+        if (!this.player.canMove(0, 1, this.world)) return
+        this.player.move(0, 1)
+        this.encounter()
+        break
+      case 'r':
+        if (
+          document.querySelectorAll('.ui_window[data-title="Rest now?"]')
+            .length > 0
+        )
+          return
+
+        new Window(
+          'Rest now?',
+          ['Blah blah', 'rest yes or no?'],
+          [
+            {
+              label: 'Yes',
+              color: 'green',
+              function: () => {
+                this.player.rest()
+              },
+            },
+            { label: 'No', color: 'grey', function: null },
+          ],
+          this
+        )
+        break
+      case 'i':
+        this.player.inventory()
+        break
+      case 's':
+        this.player.search()
         break
       default:
         return
     }
 
     this.draw()
+  }
+
+  private encounter() {
+    const currentLocation = this.world.getTerrain(this.player.x, this.player.y)
+    if (Math.random() > currentLocation.terrain.difficulty / 10) return
+
+    this.pause()
+    new Window(
+      'Encounter!',
+      ["You've stumbled upon a random encounter!"],
+      [{ label: 'Close', color: 'grey', function: null }],
+      this
+    )
   }
 
   start() {
@@ -92,7 +144,7 @@ export class Game {
     }
   }
 
-  private draw() {
+  draw() {
     const screenCenterX = Math.floor(this.cellsAcross / 2)
     const screenCenterY = Math.floor(this.cellsDown / 2)
 
@@ -123,7 +175,6 @@ export class Game {
     }
 
     // Draw player
-    this.canvas.setFont(16, 'ui-monospace', 'bold')
     this.player.draw(
       this.canvas,
       screenCenterX * this.canvas.fontSize,
@@ -131,20 +182,17 @@ export class Game {
     )
 
     // Draw UI
-    this.drawUI()
-  }
-
-  private drawUI() {
     const uiText = `Biome: ${this.player.currentBiome}
-    Terrain: ${this.player.currentTerrain?.type}`
-    const lines = uiText.split('\n').length
+    Terrain: ${this.player.currentTerrain?.type}
+    Energy: ${this.player.energy}/${this.player.maxEnergy}
+    Health: ${this.player.health}/${this.player.maxHealth}`
 
     this.canvas.setColor('white')
     this.canvas.rect(
       0,
-      this.canvas.height - this.canvas.fontSize * lines,
+      this.canvas.height - this.canvas.fontSize * 2,
       this.canvas.width,
-      this.canvas.fontSize * lines
+      this.canvas.fontSize * 2
     )
     this.canvas.setColor('black')
     this.canvas.text(uiText, 0, this.canvas.height - this.canvas.fontSize)

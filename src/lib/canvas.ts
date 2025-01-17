@@ -1,9 +1,9 @@
 export class Canvas {
-  active: boolean
-  container: HTMLDivElement | null
-  canvas: HTMLCanvasElement
-  ctx: CanvasRenderingContext2D
-  color: string
+  public active: boolean
+  public container: HTMLDivElement | null
+  private canvas: HTMLCanvasElement
+  private ctx: CanvasRenderingContext2D
+  private color: string
   fontSize: number
   font: string
   width: number

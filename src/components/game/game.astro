@@ -2,22 +2,19 @@
 
 ---
 
-<div id="game"></div>
+<div id="game">
+  <div id="ui"></div>
+</div>
 
 <script>
-  import { Canvas } from '../../lib/canvas'
-  import { World } from './world'
   import { Game } from './game.ts'
 
   const WIDTH = document.body.clientWidth
   const HEIGHT = document.body.clientHeight
 
-  const canvas = new Canvas('#game', WIDTH, HEIGHT)
-  const world = new World()
-
   const game = new Game({
-    canvas,
-    world,
+    canvasSelector: '#game',
+    uiSelector: '#ui',
     width: WIDTH,
     height: HEIGHT,
   })
@@ -30,3 +27,41 @@
     game.destroy()
   })
 </script>
+
+<style is:global>
+  .ui_window {
+    position: fixed;
+    background: rgb(207, 188, 169);
+    padding: 0.5rem;
+    border: 4px solid rgb(93 45 0);
+    border-radius: 10px;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    text-align: center;
+
+    h2 {
+      font-weight: bold;
+      width: 100%;
+      border-bottom: 1px solid black;
+    }
+
+    div {
+      display: flex;
+      gap: 0.5rem;
+    }
+    button {
+      text-align: center;
+      flex: 1;
+      background: rgba(0, 0, 0, 0.1);
+      border: 1px solid rgb(93 45 0);
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: rgba(0, 0, 0, 0.2);
+    }
+  }
+</style>

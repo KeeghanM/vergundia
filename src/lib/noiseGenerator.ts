@@ -1,6 +1,8 @@
 import { createNoise2D } from 'simplex-noise'
+import alea from 'alea'
 
 type NoiseConfig = {
+  seed?: string
   scale: number
   influence?: number
 }
@@ -11,7 +13,7 @@ export class NoiseGenerator {
   influence: number
 
   constructor(config: NoiseConfig) {
-    this.noise = createNoise2D()
+    this.noise = createNoise2D(alea(config.seed ?? 'seed'))
     this.scale = config.scale
     this.influence = config.influence ?? 1
   }
