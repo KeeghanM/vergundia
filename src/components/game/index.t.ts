@@ -1,6 +1,3 @@
-import type { Canvas } from '../../lib/canvas'
-import type { World } from './world'
-
 export enum Requirement {
   BOAT = 'boat',
   CLIMB = 'climb',
@@ -86,6 +83,5 @@ export type ChunkCache = {
 
 export type Button = {
   label: string
-  color: string
-  function: null | (() => void)
+  function?: () => void
 }

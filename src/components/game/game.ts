@@ -16,9 +16,9 @@ export class Game {
   constructor(config: GameConfig) {
     this.canvas = new Canvas(config.canvasSelector, config.width, config.height)
     this.world = new World()
-    this.player = new Player()
-    this.cellsAcross = Math.floor(config.width / this.canvas.fontSize)
-    this.cellsDown = Math.floor(config.height / this.canvas.fontSize)
+    this.player = new Player(this)
+    this.cellsAcross = Math.floor(config.width / this.canvas.fontSize) + 1
+    this.cellsDown = Math.floor(config.height / this.canvas.fontSize) + 1
     this.isActive = false
 
     this.setupEventListeners()
@@ -37,53 +37,36 @@ export class Game {
 
     switch (e.key) {
       case 'ArrowLeft':
-        if (!this.player.canMove(-1, 0, this.world)) return
+        if (!this.player.canMove(-1, 0)) return
         this.player.move(-1, 0)
         this.encounter()
         break
       case 'ArrowRight':
-        if (!this.player.canMove(1, 0, this.world)) return
+        if (!this.player.canMove(1, 0)) return
         this.player.move(1, 0)
         this.encounter()
         break
       case 'ArrowUp':
-        if (!this.player.canMove(0, -1, this.world)) return
+        if (!this.player.canMove(0, -1)) return
         this.player.move(0, -1)
         this.encounter()
         break
       case 'ArrowDown':
-        if (!this.player.canMove(0, 1, this.world)) return
+        if (!this.player.canMove(0, 1)) return
         this.player.move(0, 1)
         this.encounter()
         break
       case 'r':
-        if (
-          document.querySelectorAll('.ui_window[data-title="Rest now?"]')
-            .length > 0
-        )
-          return
-
-        new Window(
-          'Rest now?',
-          ['Blah blah', 'rest yes or no?'],
-          [
-            {
-              label: 'Yes',
-              color: 'green',
-              function: () => {
-                this.player.rest()
-              },
-            },
-            { label: 'No', color: 'grey', function: null },
-          ],
-          this
-        )
+        this.player.rest(this)
         break
       case 'i':
-        this.player.inventory()
+        this.player.openInventory()
         break
       case 's':
         this.player.search()
+        break
+      case 'x':
+        this.player.xp += 500
         break
       default:
         return
@@ -100,7 +83,7 @@ export class Game {
     new Window(
       'Encounter!',
       ["You've stumbled upon a random encounter!"],
-      [{ label: 'Close', color: 'grey', function: null }],
+      [{ label: 'Close' }],
       this
     )
   }
@@ -185,16 +168,21 @@ export class Game {
     const uiText = `Biome: ${this.player.currentBiome}
     Terrain: ${this.player.currentTerrain?.type}
     Energy: ${this.player.energy}/${this.player.maxEnergy}
-    Health: ${this.player.health}/${this.player.maxHealth}`
+    Health: ${this.player.health}/${this.player.maxHealth}
+    Level: ${this.player.getLevel()} (${this.player.xp.toLocaleString()}xp)
+    Conditions: ${this.player.showConditions()}
+    `
 
-    this.canvas.setColor('white')
-    this.canvas.rect(
-      0,
-      this.canvas.height - this.canvas.fontSize * 2,
-      this.canvas.width,
-      this.canvas.fontSize * 2
-    )
+    this.canvas.setColor('#cfbca9')
+    this.canvas.rect(0, 0, this.canvas.width, this.canvas.fontSize * 2)
+    this.canvas.setColor('#5d2d00')
+    this.canvas.rect(0, this.canvas.fontSize * 2, this.canvas.width, 4)
     this.canvas.setColor('black')
-    this.canvas.text(uiText, 0, this.canvas.height - this.canvas.fontSize)
+    this.canvas.text(
+      uiText,
+      this.canvas.fontSize,
+      this.canvas.fontSize * 1.3,
+      'Quintessential'
+    )
   }
 }

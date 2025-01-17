@@ -2,8 +2,6 @@ import type { Game } from '../components/game/game'
 import type { Button } from '../components/game/index.t'
 
 export class Window {
-  public width = 300
-  public height = 200
   public x = 0
   public y = 0
 
@@ -16,21 +14,21 @@ export class Window {
 
   constructor(title: string, content: string[], buttons: Button[], game: Game) {
     this.element = this.createElement(title, game)
-    this.setPosition(
-      game.canvas.width / 2 - this.width / 2,
-      game.canvas.height / 2 - this.height / 2
-    )
 
     this.setupText(title, content)
     this.setupButtons(buttons, game)
     this.setupDragHandler()
-
     game.canvas.container!.append(this.element)
+
+    this.setPosition(
+      game.canvas.width / 2 - this.element.clientWidth / 2,
+      game.canvas.height / 2 - this.element.clientHeight / 2
+    )
   }
   private createElement(title: string, game: Game) {
     const elem = document.createElement('div')
-    elem.style.minWidth = `${this.width}px`
-    elem.style.minHeight = `${this.height}px`
+    elem.style.minWidth = `${300}px`
+    elem.style.minHeight = `${200}px`
     elem.style.maxWidth = `${game.canvas.width * 0.8}px`
     elem.style.maxHeight = `${game.canvas.height * 0.8}px`
     elem.setAttribute('data-title', title)

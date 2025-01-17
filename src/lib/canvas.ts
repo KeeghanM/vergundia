@@ -1,13 +1,14 @@
 export class Canvas {
   public active: boolean
   public container: HTMLDivElement | null
+  public width: number
+  public height: number
+  public fontSize: number
+
   private canvas: HTMLCanvasElement
   private ctx: CanvasRenderingContext2D
   private color: string
-  fontSize: number
-  font: string
-  width: number
-  height: number
+  private font: string
 
   constructor(selector: string, width: number, height: number) {
     this.active = false
@@ -62,8 +63,9 @@ export class Canvas {
     this.ctx.fillRect(x, y, width, height)
   }
 
-  text(text: string, x: number, y: number) {
+  text(text: string, x: number, y: number, font?: string) {
     this.ctx.fillStyle = this.color
+    this.setFont(this.fontSize, font ?? 'ui-monospace')
     this.ctx.font = this.font
     this.ctx.fillText(text, x, y)
   }
