@@ -10,9 +10,9 @@ export class Canvas {
   private color: string
   private font: string
 
-  constructor(selector: string, width: number, height: number) {
+  constructor(container: HTMLDivElement, width: number, height: number) {
     this.active = false
-    this.container = document.querySelector(selector)
+    this.container = container
     if (!this.container) {
       throw new Error('Container not found')
     }

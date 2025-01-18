@@ -1,203 +1,254 @@
+// player.ts
 import type { Canvas } from '../../lib/canvas'
-import { Window } from '../../lib/window'
-import type { Game } from './game'
-import {
-  type Requirement,
-  type Terrain,
-  type PlayerCondition,
-  PlayerCondition as pc,
-} from './index.t'
-import type { World } from './world'
+import type { EventSystem } from '../../lib/eventSystem'
+import type { ServiceContainer } from '../../lib/serviceContainer'
+import type { StateManager } from '../../lib/stateManager'
+import type { Terrain, Requirement, PlayerCondition } from './index.t'
+import { GameEvents, PlayerCondition as pc } from './index.t'
+import { World } from './world'
 
 export class Player {
-  public x: number
-  public y: number
-  public abilities: Set<Requirement> = new Set()
-  public conditions: Set<PlayerCondition> = new Set()
-  public currentTerrain: Terrain | null
-  public currentBiome: string | null
+  private container: ServiceContainer
+  private readonly BASE_MOVE_COST = 1
+  private readonly BASE_XP = 1000 // Level 1 XP requirement
+  private readonly LEVEL_MULTIPLIER = 1.4
 
-  // public inventory
-
-  public energy = 10
-  public maxEnergy = 100
-  public health = 100
-  public maxHealth = 100
-
-  public xp = 0
-
-  private color: string
-  private symbol: string
-
-  private warned = false
-  private movingTo: Terrain | null
-  private readonly moveCost = 1 // equivalent to Miles/tile
-  private game: Game
-
-  constructor(game: Game) {
-    this.game = game
-    this.x = 0
-    this.y = 0
-    this.color = 'red'
-    this.symbol = '@'
-    this.currentTerrain = null
-    this.currentBiome = null
-    this.movingTo = null
-  }
-
-  draw(canvas: Canvas, centerX: number, centerY: number) {
-    canvas.setColor(this.color)
-    canvas.text(this.symbol, centerX, centerY)
-  }
-
-  getPosition() {
-    return { x: this.x, y: this.y }
+  constructor(container: ServiceContainer) {
+    this.container = container
   }
 
   move(dx: number, dy: number) {
-    this.x += dx
-    this.y += dy
+    const state = this.container.get<StateManager>('state')
+    const events = this.container.get<EventSystem>('events')
+    const currentState = state.getState()
+    const currentPos = currentState.player.position
 
-    this.energy -= this.moveCost * (this.movingTo?.difficulty ?? 0)
-    if (this.energy < 0) {
-      // We've moved when we shouldn't have
-      const isTired = this.conditions.has(pc.TIRED)
-      const isExhausted = this.conditions.has(pc.EXHAUSTED)
-      const isConfused = this.conditions.has(pc.CONFUSED)
+    const newX = currentPos.x + dx
+    const newY = currentPos.y + dy
 
-      const badThingChance = isConfused
-        ? 1
-        : isExhausted
-        ? 0.7
-        : isTired
-        ? 0.3
-        : 0.1
-      let added: PlayerCondition | null = null
-      if (Math.random() < badThingChance) {
-        if (!isTired) added = pc.TIRED
-        else if (isTired && !isExhausted) added = pc.EXHAUSTED
-        else if (isExhausted && !isConfused) added = pc.CONFUSED
+    // Check if movement is possible
+    if (!this.canMove(dx, dy)) return
 
-        if (added) this.conditions.add(added)
+    // Update position
+    state.updatePlayerPosition(newX, newY)
 
-        const damage = Math.round(20 * badThingChance)
+    // Calculate energy cost
+    const energyCost = this.calculateMoveCost(currentState.world.currentTerrain)
+    const newEnergy = currentState.player.energy - energyCost
 
-        this.health -= damage
-        new Window(
-          'Ouch!',
-          [
-            `In your ${
-              isConfused
-                ? 'confused'
-                : isExhausted
-                ? 'exhausted'
-                : isTired
-                ? 'tired'
-                : ''
-            } state you stumble and trip! You take ${damage} points of damage!`,
-            `${
-              added ? `You have also gained the ${added} condition!` : ''
-            } Make sure you rest soon.`,
-          ],
-          [
-            {
-              label: 'Ok',
-            },
-          ],
-          this.game
-        )
-      }
+    state.updatePlayerStats({
+      position: { x: newX, y: newY },
+      energy: newEnergy,
+    })
+
+    // Emit move event
+    events.emit(GameEvents.PLAYER_MOVE, { x: newX, y: newY })
+
+    // Check for exhaustion effects
+    if (newEnergy < 0) {
+      this.checkExhaustionEffects()
     }
-
-    this.energy = Math.max(this.energy, 0)
   }
 
-  canMove(dx: number, dy: number) {
-    const x = this.x + dx
-    const y = this.y + dy
-    const terrain = this.game.world.getTerrain(x, y).terrain
+  canMove(dx: number, dy: number): boolean {
+    const state = this.container.get<StateManager>('state')
+    const events = this.container.get<EventSystem>('events')
+    const currentState = state.getState()
+    const { x, y } = currentState.player.position
 
-    if (this.energy - this.moveCost * (this.movingTo?.difficulty ?? 0) < 0) {
-      if (!this.warned) {
-        new Window(
-          'Continue to move?',
-          [
-            "You're low on energy! If you keep moving through the world, you'll risk serious consequences!",
-          ],
-          [
-            {
-              label: 'Continue',
-              function: () => {
-                this.warned = true
-                this.move(dx, dy)
-              },
+    const world = this.container.get<World>('world')
+    const terrain = world.getTerrain(x + dx, y + dy).terrain
+
+    // Check energy requirements
+    const energyCost = this.calculateMoveCost(terrain)
+    if (
+      currentState.player.energy - energyCost < 0 &&
+      !currentState.player.warned
+    ) {
+      events.emit(GameEvents.WINDOW_OPEN, {
+        title: 'Continue to move?',
+        content: [
+          "You're low on energy! If you keep moving through the world, you'll risk serious consequences!",
+        ],
+        buttons: [
+          {
+            label: 'Continue',
+            function: () => {
+              state.updatePlayerStats({
+                warned: true,
+              })
             },
-            {
-              label: 'Stop',
-            },
-          ],
-          this.game
-        )
-        return false
-      } else {
-        return true
-      }
+          },
+          { label: 'Stop' },
+        ],
+      })
+      return false
     }
 
+    // Check terrain requirements
     if (terrain.requirements) {
       for (const requirement of terrain.requirements) {
-        if (!this.abilities.has(requirement)) {
+        if (!currentState.player.abilities.has(requirement)) {
           return false
         }
       }
     }
 
-    this.movingTo = terrain
     return true
   }
 
-  openInventory() {}
+  private calculateMoveCost(terrain: Terrain | null): number {
+    return this.BASE_MOVE_COST * (terrain?.difficulty ?? 1)
+  }
 
-  rest(game: Game) {
-    if (
-      document.querySelectorAll('.ui_window[data-title="Rest now?"]').length > 0
-    )
-      return
+  private checkExhaustionEffects() {
+    const state = this.container.get<StateManager>('state')
+    const events = this.container.get<EventSystem>('events')
+    const currentState = state.getState()
+    const { conditions } = currentState.player
 
-    new Window(
-      'Rest now?',
-      ['Blah blah', 'rest yes or no?'],
-      [
+    const isTired = conditions.has(pc.TIRED)
+    const isExhausted = conditions.has(pc.EXHAUSTED)
+    const isConfused = conditions.has(pc.CONFUSED)
+
+    const badThingChance = isConfused
+      ? 1
+      : isExhausted
+      ? 0.7
+      : isTired
+      ? 0.3
+      : 0.1
+
+    if (Math.random() < badThingChance) {
+      let newCondition: PlayerCondition | null = null
+      if (!isTired) newCondition = pc.TIRED
+      else if (isTired && !isExhausted) newCondition = pc.EXHAUSTED
+      else if (isExhausted && !isConfused) newCondition = pc.CONFUSED
+
+      const damage = Math.round(20 * badThingChance)
+
+      // Update state
+      const newConditions = new Set(conditions)
+      if (newCondition) newConditions.add(newCondition)
+
+      state.updatePlayerStats({
+        health: currentState.player.health - damage,
+        conditions: newConditions,
+      })
+
+      // Show message
+      events.emit(GameEvents.WINDOW_OPEN, {
+        title: 'Ouch!',
+        content: [
+          `In your ${
+            isConfused
+              ? 'confused'
+              : isExhausted
+              ? 'exhausted'
+              : isTired
+              ? 'tired'
+              : ''
+          } state you stumble and trip! You take ${damage} points of damage!`,
+          `${
+            newCondition
+              ? `You have also gained the ${newCondition} condition!`
+              : ''
+          } Make sure you rest soon.`,
+        ],
+        buttons: [{ label: 'Ok' }],
+      })
+    }
+  }
+
+  rest() {
+    const state = this.container.get<StateManager>('state')
+    const events = this.container.get<EventSystem>('events')
+
+    events.emit(GameEvents.WINDOW_OPEN, {
+      title: 'Rest now?',
+      content: ['Would you like to rest and recover?'],
+      buttons: [
         {
           label: 'Yes',
           function: () => {
-            this.energy = this.maxEnergy
-            this.health = this.maxHealth
-            this.warned = false
+            state.updatePlayerStats({
+              energy: state.getState().player.maxEnergy,
+              health: state.getState().player.maxHealth,
+              warned: false,
+              conditions: new Set(),
+            })
+            events.emit(GameEvents.WINDOW_CLOSE)
           },
         },
-        { label: 'No' },
+        {
+          label: 'No',
+          function: () => events.emit(GameEvents.WINDOW_CLOSE),
+        },
       ],
-      game
-    )
+    })
   }
 
-  search() {}
+  getLevel(): number {
+    const state = this.container.get<StateManager>('state')
+    const xp = state.getState().player.xp
 
-  getLevel() {
-    const baseXP = 1000 // Level 1 XP requirement
-    const multiplier = 1.4
     return (
       Math.floor(
-        Math.log(1 + (this.xp * (multiplier - 1)) / baseXP) /
-          Math.log(multiplier)
+        Math.log(1 + (xp * (this.LEVEL_MULTIPLIER - 1)) / this.BASE_XP) /
+          Math.log(this.LEVEL_MULTIPLIER)
       ) + 1
     )
   }
 
-  showConditions() {
-    let s = ''
-    this.conditions.forEach((c) => (s += `${c} | `))
-    return s
+  showConditions(): string {
+    const state = this.container.get<StateManager>('state')
+    const conditions = state.getState().player.conditions
+    return Array.from(conditions).join(' | ')
+  }
+
+  openInventory() {
+    const events = this.container.get<EventSystem>('events')
+    events.emit(GameEvents.WINDOW_OPEN, {
+      title: 'Inventory',
+      content: ['Your inventory is empty.'], // TODO: Implement inventory system
+      buttons: [{ label: 'Close' }],
+    })
+  }
+
+  search() {
+    // TODO: Implement search functionality
+    const events = this.container.get<EventSystem>('events')
+    events.emit(GameEvents.WINDOW_OPEN, {
+      title: 'Search',
+      content: ['You search the area but find nothing of interest.'],
+      buttons: [{ label: 'Close' }],
+    })
+  }
+
+  addXP(amount: number) {
+    const state = this.container.get<StateManager>('state')
+    const currentXP = state.getState().player.xp
+    state.updatePlayerStats({ xp: currentXP + amount })
+  }
+
+  addAbility(ability: Requirement) {
+    const state = this.container.get<StateManager>('state')
+    const currentAbilities = state.getState().player.abilities
+    state.updatePlayerStats({
+      abilities: new Set([...currentAbilities, ability]),
+    })
+  }
+
+  removeCondition(condition: PlayerCondition) {
+    const state = this.container.get<StateManager>('state')
+    const currentConditions = state.getState().player.conditions
+    const newConditions = new Set(currentConditions)
+    newConditions.delete(condition)
+    state.updatePlayerStats({ conditions: newConditions })
+  }
+
+  draw(canvas: Canvas, centerX: number, centerY: number) {
+    canvas.setColor('red')
+    canvas.text('@', centerX, centerY)
   }
 }

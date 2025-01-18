@@ -2,8 +2,12 @@ import type { Biome, BiomeConfig, ChunkCache } from './index.t'
 import { NoiseGenerator } from '../../lib/noiseGenerator'
 import { TerrainSystem } from './terrainSystem'
 import { biomes } from './dataFiles/biomes'
+import type { ServiceContainer } from '../../lib/serviceContainer'
 
 export class World {
+  private container: ServiceContainer
+
+  // World gen
   private biomeSystems: {
     biome: Biome
     terrainSystem: TerrainSystem
@@ -20,7 +24,10 @@ export class World {
   private readonly CHUNK_MASK = this.CHUNK_SIZE - 1 // For fast modulo
   private chunks: Map<string, ChunkCache>
 
-  constructor() {
+  constructor(container: ServiceContainer) {
+    this.container = container
+    this.chunks = new Map()
+
     // Initialize noise generators without scales
     this.heightNoise = new NoiseGenerator({ scale: 0.002 })
     this.heightDetailNoise = new NoiseGenerator({ scale: 0.8, influence: 0.2 })
@@ -41,12 +48,9 @@ export class World {
       biome,
       terrainSystem: new TerrainSystem(biome.terrainTypes),
     }))
-
-    this.chunks = new Map()
   }
 
   private getChunkKey(x: number, y: number): string {
-    // Faster than string concatenation with template literals
     return (x >> 5) + ',' + (y >> 5) // Divide by CHUNK_SIZE using bit shift
   }
 

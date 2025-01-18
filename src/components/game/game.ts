@@ -1,188 +1,301 @@
 import { Canvas } from '../../lib/canvas'
+import { EventSystem } from '../../lib/eventSystem'
+import { ServiceContainer } from '../../lib/serviceContainer'
+import { StateManager } from '../../lib/stateManager'
+import { Window } from '../../lib/window'
+import {
+  GameEvents,
+  type GameConfig,
+  type GameState,
+  type Position,
+} from './index.t'
 import { Player } from './player'
 import { World } from './world'
-import type { GameConfig } from './index.t'
-import { Window } from '../../lib/window'
 
 export class Game {
-  public world: World
-  public player: Player
-  public canvas: Canvas
-
+  private container: ServiceContainer
   private cellsAcross: number
   private cellsDown: number
-  private isActive: boolean
 
   constructor(config: GameConfig) {
-    this.canvas = new Canvas(config.canvasSelector, config.width, config.height)
-    this.world = new World()
-    this.player = new Player(this)
-    this.cellsAcross = Math.floor(config.width / this.canvas.fontSize) + 1
-    this.cellsDown = Math.floor(config.height / this.canvas.fontSize) + 1
-    this.isActive = false
+    // Initialize service container
+    this.container = new ServiceContainer()
 
+    // Setup canvas
+    const gameContainer = document.querySelector(
+      config.canvasSelector
+    ) as HTMLDivElement
+    if (!gameContainer) throw new Error('Game container not found')
+
+    const canvas = new Canvas(gameContainer, config.width, config.height)
+    this.cellsAcross = Math.floor(config.width / canvas.fontSize) + 1
+    this.cellsDown = Math.floor(config.height / canvas.fontSize) + 1
+
+    // Initialize core services
+    const stateManager = new StateManager(this.createInitialState())
+    const eventSystem = new EventSystem()
+    const world = new World(this.container)
+
+    // Register all services
+    this.container.register('canvas', canvas)
+    this.container.register('state', stateManager)
+    this.container.register('events', eventSystem)
+    this.container.register('world', world)
+    this.container.register('player', new Player(this.container))
+
+    // Setup event listeners and subscriptions
     this.setupEventListeners()
   }
 
-  private setupEventListeners() {
-    document.addEventListener('keydown', this.handleKeyPress.bind(this))
-    // Clean up on destroy
-    this.destroy = () => {
-      document.removeEventListener('keydown', this.handleKeyPress.bind(this))
+  private createInitialState(): GameState {
+    return {
+      player: {
+        position: { x: 0, y: 0 },
+        health: 100,
+        maxHealth: 100,
+        energy: 10,
+        maxEnergy: 100,
+        xp: 0,
+        conditions: new Set(),
+        abilities: new Set(),
+        warned: false,
+      },
+      world: {
+        currentTerrain: null,
+        currentBiome: null,
+      },
+      ui: {
+        windows: [],
+        isPaused: false,
+      },
     }
+  }
+
+  private setupEventListeners() {
+    const events = this.container.get<EventSystem>('events')
+    const state = this.container.get<StateManager>('state')
+
+    // Handle keyboard input
+    document.addEventListener('keydown', (e) => {
+      if (state.getState().ui.isPaused) return
+      this.handleKeyPress(e)
+    })
+
+    // Subscribe to game events
+    events.on(GameEvents.PLAYER_MOVE, () => {
+      this.checkForEncounters()
+      this.updatePlayerWorldInfo()
+      this.draw()
+    })
+
+    events.on(GameEvents.WINDOW_OPEN, (windowData) => {
+      this.pause()
+      new Window(windowData, this.container)
+    })
+
+    events.on(GameEvents.WINDOW_CLOSE, () => {
+      this.resume()
+      this.draw()
+    })
+
+    // Subscribe to state changes
+    state.subscribe(() => {
+      this.draw()
+    })
   }
 
   private handleKeyPress(e: KeyboardEvent) {
-    if (!this.isActive) return
+    const player = this.container.get<Player>('player')
+    const state = this.container.get<StateManager>('state')
+
+    if (state.getState().ui.isPaused) return
 
     switch (e.key) {
       case 'ArrowLeft':
-        if (!this.player.canMove(-1, 0)) return
-        this.player.move(-1, 0)
-        this.encounter()
+        player.move(-1, 0)
         break
       case 'ArrowRight':
-        if (!this.player.canMove(1, 0)) return
-        this.player.move(1, 0)
-        this.encounter()
+        player.move(1, 0)
         break
       case 'ArrowUp':
-        if (!this.player.canMove(0, -1)) return
-        this.player.move(0, -1)
-        this.encounter()
+        player.move(0, -1)
         break
       case 'ArrowDown':
-        if (!this.player.canMove(0, 1)) return
-        this.player.move(0, 1)
-        this.encounter()
+        player.move(0, 1)
         break
       case 'r':
-        this.player.rest(this)
+        player.rest()
         break
       case 'i':
-        this.player.openInventory()
+        player.openInventory()
         break
       case 's':
-        this.player.search()
+        player.search()
         break
-      case 'x':
-        this.player.xp += 500
+      case 'h':
+        this.help()
         break
-      default:
-        return
+      case 'Escape':
+        this.help()
+        break
     }
-
-    this.draw()
   }
 
-  private encounter() {
-    const currentLocation = this.world.getTerrain(this.player.x, this.player.y)
-    if (Math.random() > currentLocation.terrain.difficulty / 10) return
-
-    this.pause()
-    new Window(
-      'Encounter!',
-      ["You've stumbled upon a random encounter!"],
-      [{ label: 'Close' }],
-      this
-    )
-  }
-
-  start() {
-    this.isActive = true
-    this.draw()
-  }
-
-  pause() {
-    this.isActive = false
-  }
-
-  resume() {
-    this.isActive = true
-  }
-
-  destroy() {
-    // Will be replaced by setupEventListeners
-  }
-
-  private screenToWorld(screenX: number, screenY: number) {
-    const { x: playerX, y: playerY } = this.player.getPosition()
+  private screenToWorld(screenX: number, screenY: number): Position {
+    const state = this.container.get<StateManager>('state')
+    const { position: playerPos } = state.getState().player
     const screenCenterX = Math.floor(this.cellsAcross / 2)
     const screenCenterY = Math.floor(this.cellsDown / 2)
 
     return {
-      x: screenX - screenCenterX + playerX,
-      y: screenY - screenCenterY + playerY,
+      x: screenX - screenCenterX + playerPos.x,
+      y: screenY - screenCenterY + playerPos.y,
     }
   }
 
-  private worldToScreen(worldX: number, worldY: number) {
-    const { x: playerX, y: playerY } = this.player.getPosition()
-    const screenCenterX = Math.floor(this.cellsAcross / 2)
-    const screenCenterY = Math.floor(this.cellsDown / 2)
+  private updatePlayerWorldInfo() {
+    const state = this.container.get<StateManager>('state')
+    const world = this.container.get<World>('world')
+    const { position } = state.getState().player
 
-    return {
-      x: worldX - playerX + screenCenterX,
-      y: worldY - playerY + screenCenterY,
-    }
+    const { terrain, biomeName } = world.getTerrain(position.x, position.y)
+
+    state.dispatch('world', {
+      currentTerrain: terrain,
+      currentBiome: biomeName,
+    })
   }
 
-  draw() {
+  private checkForEncounters() {
+    const state = this.container.get<StateManager>('state')
+    const events = this.container.get<EventSystem>('events')
+    const currentState = state.getState()
+
+    if (!currentState.world.currentTerrain) return
+
+    const encounterChance = currentState.world.currentTerrain.difficulty / 10
+    if (Math.random() > encounterChance) return
+
+    events.emit(GameEvents.WINDOW_OPEN, {
+      title: 'Encounter!',
+      content: ["You've stumbled upon a random encounter!"],
+      buttons: [{ label: 'Close' }],
+    })
+  }
+
+  private draw() {
+    const canvas = this.container.get<Canvas>('canvas')
+    const world = this.container.get<World>('world')
+    const player = this.container.get<Player>('player')
+
+    // Clear and set background
+    canvas.clear()
+    canvas.bg('black')
+
     const screenCenterX = Math.floor(this.cellsAcross / 2)
     const screenCenterY = Math.floor(this.cellsDown / 2)
-
-    this.canvas.bg('black')
 
     // Draw world
-    this.canvas.setFont(16, 'ui-monospace')
     for (let screenX = 0; screenX < this.cellsAcross; screenX++) {
       for (let screenY = 0; screenY < this.cellsDown; screenY++) {
         const { x: worldX, y: worldY } = this.screenToWorld(screenX, screenY)
-        const { terrain, biomeName } = this.world.getTerrain(worldX, worldY)
+        const { terrain } = world.getTerrain(worldX, worldY)
 
         if (screenX === screenCenterX && screenY === screenCenterY) {
-          // Cache players current terrain
-          this.player.currentTerrain = terrain
-          this.player.currentBiome = biomeName
-
-          continue // Skip player position for rendering
+          continue // Skip player position
         }
 
-        this.canvas.setColor(terrain.color)
-        this.canvas.text(
+        canvas.setColor(terrain.color)
+        canvas.text(
           terrain.label,
-          screenX * this.canvas.fontSize,
-          screenY * this.canvas.fontSize
+          screenX * canvas.fontSize,
+          screenY * canvas.fontSize
         )
       }
     }
 
     // Draw player
-    this.player.draw(
-      this.canvas,
-      screenCenterX * this.canvas.fontSize,
-      screenCenterY * this.canvas.fontSize
+    player.draw(
+      canvas,
+      screenCenterX * canvas.fontSize,
+      screenCenterY * canvas.fontSize
     )
 
     // Draw UI
-    const uiText = `Biome: ${this.player.currentBiome}
-    Terrain: ${this.player.currentTerrain?.type}
-    Energy: ${this.player.energy}/${this.player.maxEnergy}
-    Health: ${this.player.health}/${this.player.maxHealth}
-    Level: ${this.player.getLevel()} (${this.player.xp.toLocaleString()}xp)
-    Conditions: ${this.player.showConditions()}
-    `
+    this.drawUI()
+  }
 
-    this.canvas.setColor('#cfbca9')
-    this.canvas.rect(0, 0, this.canvas.width, this.canvas.fontSize * 2)
-    this.canvas.setColor('#5d2d00')
-    this.canvas.rect(0, this.canvas.fontSize * 2, this.canvas.width, 4)
-    this.canvas.setColor('black')
-    this.canvas.text(
+  private drawUI() {
+    const state = this.container.get<StateManager>('state').getState()
+    const canvas = this.container.get<Canvas>('canvas')
+    const player = this.container.get<Player>('player')
+
+    const uiText = `Biome: ${state.world.currentBiome}
+    Terrain: ${state.world.currentTerrain?.type}
+    Energy: ${state.player.energy}/${state.player.maxEnergy}
+    Health: ${state.player.health}/${state.player.maxHealth}
+    Level: ${player.getLevel()} (${state.player.xp.toLocaleString()}xp)
+    Conditions: ${player.showConditions()}`
+
+    // Draw UI background
+    canvas.setColor('#cfbca9')
+    canvas.rect(0, 0, canvas.width, canvas.fontSize * 2)
+    canvas.setColor('#5d2d00')
+    canvas.rect(0, canvas.fontSize * 2, canvas.width, 4)
+
+    // Draw UI text
+    canvas.setColor('black')
+    canvas.text(
       uiText,
-      this.canvas.fontSize,
-      this.canvas.fontSize * 1.3,
+      canvas.fontSize,
+      canvas.fontSize * 1.3,
       'Quintessential'
     )
+  }
+
+  private help() {
+    const events = this.container.get<EventSystem>('events')
+
+    events.emit(GameEvents.WINDOW_OPEN, {
+      title: 'Help & Controls',
+      content: [
+        'Arrow Keys: Movement',
+        'R: Rest',
+        'S: Search',
+        'B: Build',
+        'E: Enter/Explore',
+        'I: Open Inventory',
+        'P: Show Player',
+        'H: Help',
+        'Esc: Settings',
+        '',
+        'The bar along the top contains all your player stats, but for more details you can open the player pane with P. Explore the world, avoid the dangers.',
+        'Be careful.',
+      ],
+      buttons: [{ label: 'Close' }],
+    })
+  }
+
+  start() {
+    const state = this.container.get<StateManager>('state')
+    state.dispatch('ui', { isPaused: false })
+    this.updatePlayerWorldInfo()
+    this.draw()
+  }
+
+  pause() {
+    const state = this.container.get<StateManager>('state')
+    state.dispatch('ui', { isPaused: true })
+  }
+
+  resume() {
+    const state = this.container.get<StateManager>('state')
+    state.dispatch('ui', { isPaused: false })
+    this.draw()
+  }
+
+  // Method to access the service container (useful for testing and debugging)
+  getContainer() {
+    return this.container
   }
 }

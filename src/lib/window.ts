@@ -1,5 +1,11 @@
-import type { Game } from '../components/game/game'
-import type { Button } from '../components/game/index.t'
+import type { ServiceContainer } from './serviceContainer'
+import { EventSystem } from './eventSystem'
+import { Canvas } from './canvas'
+import {
+  GameEvents,
+  type Button,
+  type WindowData,
+} from '../components/game/index.t'
 
 export class Window {
   public x = 0
@@ -11,26 +17,33 @@ export class Window {
   private startY = 0
   private startMouseX = 0
   private startMouseY = 0
+  private container: ServiceContainer
 
-  constructor(title: string, content: string[], buttons: Button[], game: Game) {
-    this.element = this.createElement(title, game)
+  constructor(windowData: WindowData, container: ServiceContainer) {
+    this.container = container
+    const canvas = this.container.get<Canvas>('canvas')
 
-    this.setupText(title, content)
-    this.setupButtons(buttons, game)
+    this.element = this.createElement(windowData.title)
+    this.setupText(windowData.title, windowData.content)
+    this.setupButtons(windowData.buttons)
     this.setupDragHandler()
-    game.canvas.container!.append(this.element)
 
+    canvas.container!.append(this.element)
+
+    // Center the window
     this.setPosition(
-      game.canvas.width / 2 - this.element.clientWidth / 2,
-      game.canvas.height / 2 - this.element.clientHeight / 2
+      canvas.width / 2 - this.element.clientWidth / 2,
+      canvas.height / 2 - this.element.clientHeight / 2
     )
   }
-  private createElement(title: string, game: Game) {
+
+  private createElement(title: string) {
+    const canvas = this.container.get<Canvas>('canvas')
     const elem = document.createElement('div')
     elem.style.minWidth = `${300}px`
     elem.style.minHeight = `${200}px`
-    elem.style.maxWidth = `${game.canvas.width * 0.8}px`
-    elem.style.maxHeight = `${game.canvas.height * 0.8}px`
+    elem.style.maxWidth = `${canvas.width * 0.8}px`
+    elem.style.maxHeight = `${canvas.height * 0.8}px`
     elem.setAttribute('data-title', title)
 
     return elem
@@ -48,20 +61,23 @@ export class Window {
     this.element.appendChild(textElem)
   }
 
-  private setupButtons(buttons: Button[], game: Game) {
+  private setupButtons(buttons: Button[]) {
+    const events = this.container.get<EventSystem>('events')
     const btnContainerElem = document.createElement('div')
-    buttons.map((b) => {
-      const btnElem = document.createElement('button')
-      btnElem.innerText = b.label
-      btnElem.addEventListener('click', () => {
-        if (b.function) b.function()
 
-        game.resume()
-        game.draw()
+    buttons.forEach((button) => {
+      const btnElem = document.createElement('button')
+      btnElem.innerText = button.label
+      btnElem.addEventListener('click', () => {
+        if (button.function) button.function()
+
+        // Emit window close event
+        events.emit(GameEvents.WINDOW_CLOSE)
         this.element.remove()
       })
       btnContainerElem.append(btnElem)
     })
+
     this.element.appendChild(btnContainerElem)
   }
 
