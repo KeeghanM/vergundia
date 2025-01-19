@@ -30,17 +30,17 @@ export class World {
 
     // Initialize noise generators without scales
     this.heightNoise = new NoiseGenerator({ scale: 0.002 })
-    this.heightDetailNoise = new NoiseGenerator({ scale: 0.8, influence: 0.2 })
+    this.heightDetailNoise = new NoiseGenerator({ influence: 0.2, scale: 0.8 })
 
     this.temperatureNoise = new NoiseGenerator({ scale: 0.005 })
     this.temperatureDetailNoise = new NoiseGenerator({
-      scale: 0.8,
       influence: 0.2,
+      scale: 0.8,
     })
     this.moistureNoise = new NoiseGenerator({ scale: 0.008 })
     this.moistureDetailNoise = new NoiseGenerator({
-      scale: 0.8,
       influence: 0.2,
+      scale: 0.8,
     })
 
     // Initialize biome systems
@@ -110,7 +110,7 @@ export class World {
 
     const height = this.normalizeTerrain(baseHeight + detailHeight)
 
-    return { height, temp, moisture }
+    return { height, moisture, temp }
   }
 
   getTerrain(x: number, y: number) {
@@ -152,8 +152,8 @@ export class World {
         )
         const terrainValue = this.getTerrainValue(worldX, worldY, biome.config)
         chunk.terrainData[dx][dy] = {
-          terrain: terrainSystem.getTerrainForValue(terrainValue),
           biomeName: biome.name,
+          terrain: terrainSystem.getTerrainForValue(terrainValue),
         }
       }
     }

@@ -1,7 +1,7 @@
 export class ServiceContainer {
-  private services: Map<string, any> = new Map()
+  private services: Map<string, unknown> = new Map()
 
-  register(name: string, service: any) {
+  register(name: string, service: unknown) {
     this.services.set(name, service)
   }
 

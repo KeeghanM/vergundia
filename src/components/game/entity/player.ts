@@ -1,11 +1,12 @@
 // player.ts
-import type { Canvas } from '../../lib/canvas'
-import type { EventSystem } from '../../lib/eventSystem'
-import type { ServiceContainer } from '../../lib/serviceContainer'
-import type { StateManager } from '../../lib/stateManager'
-import type { Terrain, Requirement, PlayerCondition } from './index.t'
-import { GameEvents, PlayerCondition as pc } from './index.t'
-import { World } from './world'
+import type { Canvas } from '../../../lib/canvas'
+import type { EventSystem } from '../../../lib/eventSystem'
+import type { ServiceContainer } from '../../../lib/serviceContainer'
+import type { StateManager } from '../../../lib/stateManager'
+import type { ConditionId } from '../dataFiles/conditions'
+import type { Terrain, Requirement } from '../index.t'
+import { GameEvents } from '../index.t'
+import { World } from '../world'
 
 export class Player {
   private container: ServiceContainer
@@ -37,8 +38,8 @@ export class Player {
     const newEnergy = currentState.player.energy - energyCost
 
     state.updatePlayerStats({
-      position: { x: newX, y: newY },
       energy: newEnergy,
+      position: { x: newX, y: newY },
     })
 
     // Emit move event
@@ -66,21 +67,21 @@ export class Player {
       !currentState.player.warned
     ) {
       events.emit(GameEvents.WINDOW_OPEN, {
-        title: 'Continue to move?',
-        content: [
-          "You're low on energy! If you keep moving through the world, you'll risk serious consequences!",
-        ],
         buttons: [
           {
-            label: 'Continue',
             function: () => {
               state.updatePlayerStats({
                 warned: true,
               })
             },
+            label: 'Continue',
           },
           { label: 'Stop' },
         ],
+        content: [
+          "You're low on energy! If you keep moving through the world, you'll risk serious consequences!",
+        ],
+        title: 'Continue to move?',
       })
       return false
     }
@@ -107,9 +108,9 @@ export class Player {
     const currentState = state.getState()
     const { conditions } = currentState.player
 
-    const isTired = conditions.has(pc.TIRED)
-    const isExhausted = conditions.has(pc.EXHAUSTED)
-    const isConfused = conditions.has(pc.CONFUSED)
+    const isTired = conditions.has('tired')
+    const isExhausted = conditions.has('exhausted')
+    const isConfused = conditions.has('confused')
 
     const badThingChance = isConfused
       ? 1
@@ -120,10 +121,10 @@ export class Player {
       : 0.1
 
     if (Math.random() < badThingChance) {
-      let newCondition: PlayerCondition | null = null
-      if (!isTired) newCondition = pc.TIRED
-      else if (isTired && !isExhausted) newCondition = pc.EXHAUSTED
-      else if (isExhausted && !isConfused) newCondition = pc.CONFUSED
+      let newCondition: ConditionId | null = null
+      if (!isTired) newCondition = 'tired'
+      else if (isTired && !isExhausted) newCondition = 'exhausted'
+      else if (isExhausted && !isConfused) newCondition = 'confused'
 
       const damage = Math.round(20 * badThingChance)
 
@@ -132,13 +133,13 @@ export class Player {
       if (newCondition) newConditions.add(newCondition)
 
       state.updatePlayerStats({
-        health: currentState.player.health - damage,
         conditions: newConditions,
+        health: currentState.player.health - damage,
       })
 
       // Show message
       events.emit(GameEvents.WINDOW_OPEN, {
-        title: 'Ouch!',
+        buttons: [{ label: 'Ok' }],
         content: [
           `In your ${
             isConfused
@@ -155,7 +156,7 @@ export class Player {
               : ''
           } Make sure you rest soon.`,
         ],
-        buttons: [{ label: 'Ok' }],
+        title: 'Ouch!',
       })
     }
   }
@@ -165,26 +166,26 @@ export class Player {
     const events = this.container.get<EventSystem>('events')
 
     events.emit(GameEvents.WINDOW_OPEN, {
-      title: 'Rest now?',
-      content: ['Would you like to rest and recover?'],
       buttons: [
         {
-          label: 'Yes',
           function: () => {
             state.updatePlayerStats({
+              conditions: new Set(),
               energy: state.getState().player.maxEnergy,
               health: state.getState().player.maxHealth,
               warned: false,
-              conditions: new Set(),
             })
             events.emit(GameEvents.WINDOW_CLOSE)
           },
+          label: 'Yes',
         },
         {
-          label: 'No',
           function: () => events.emit(GameEvents.WINDOW_CLOSE),
+          label: 'No',
         },
       ],
+      content: ['Would you like to rest and recover?'],
+      title: 'Rest now?',
     })
   }
 
@@ -209,9 +210,11 @@ export class Player {
   openInventory() {
     const events = this.container.get<EventSystem>('events')
     events.emit(GameEvents.WINDOW_OPEN, {
-      title: 'Inventory',
-      content: ['Your inventory is empty.'], // TODO: Implement inventory system
+      // TODO: Implement inventory system
       buttons: [{ label: 'Close' }],
+
+      content: ['Your inventory is empty.'],
+      title: 'Inventory',
     })
   }
 
@@ -219,9 +222,9 @@ export class Player {
     // TODO: Implement search functionality
     const events = this.container.get<EventSystem>('events')
     events.emit(GameEvents.WINDOW_OPEN, {
-      title: 'Search',
-      content: ['You search the area but find nothing of interest.'],
       buttons: [{ label: 'Close' }],
+      content: ['You search the area but find nothing of interest.'],
+      title: 'Search',
     })
   }
 
@@ -239,7 +242,7 @@ export class Player {
     })
   }
 
-  removeCondition(condition: PlayerCondition) {
+  removeCondition(condition: ConditionId) {
     const state = this.container.get<StateManager>('state')
     const currentConditions = state.getState().player.conditions
     const newConditions = new Set(currentConditions)

@@ -1,3 +1,5 @@
+import type { ConditionId } from './dataFiles/conditions'
+
 export type Position = {
   x: number
   y: number
@@ -10,7 +12,7 @@ export type PlayerState = {
   energy: number
   maxEnergy: number
   xp: number
-  conditions: Set<PlayerCondition>
+  conditions: Set<ConditionId>
   abilities: Set<Requirement>
   warned: boolean
 }
@@ -62,20 +64,6 @@ export enum GameEvents {
   ENCOUNTER_END = 'encounter:end',
   WINDOW_OPEN = 'window:open',
   WINDOW_CLOSE = 'window:close',
-}
-
-export enum PlayerCondition {
-  POISONED = 'poisoned',
-  BURNED = 'burned',
-  FROZEN = 'frozen',
-  SLEEPING = 'sleeping',
-  CONFUSED = 'confused',
-  TIRED = 'tired',
-  EXHAUSTED = 'exhausted',
-  HUNGRY = 'hungry',
-  STARVING = 'starving',
-  THIRSTY = 'thirsty',
-  DEHYDRATED = 'dehydrated',
 }
 
 export type Terrain = {

@@ -9,7 +9,7 @@ import {
   type GameState,
   type Position,
 } from './index.t'
-import { Player } from './player'
+import { Player } from './entity/player'
 import { World } from './world'
 
 export class Game {
@@ -50,23 +50,23 @@ export class Game {
   private createInitialState(): GameState {
     return {
       player: {
-        position: { x: 0, y: 0 },
-        health: 100,
-        maxHealth: 100,
-        energy: 10,
-        maxEnergy: 100,
-        xp: 0,
-        conditions: new Set(),
         abilities: new Set(),
+        conditions: new Set(),
+        energy: 10,
+        health: 100,
+        maxEnergy: 100,
+        maxHealth: 100,
+        position: { x: 0, y: 0 },
         warned: false,
-      },
-      world: {
-        currentTerrain: null,
-        currentBiome: null,
+        xp: 0,
       },
       ui: {
-        windows: [],
         isPaused: false,
+        windows: [],
+      },
+      world: {
+        currentBiome: null,
+        currentTerrain: null,
       },
     }
   }
@@ -161,8 +161,8 @@ export class Game {
     const { terrain, biomeName } = world.getTerrain(position.x, position.y)
 
     state.dispatch('world', {
-      currentTerrain: terrain,
       currentBiome: biomeName,
+      currentTerrain: terrain,
     })
   }
 
@@ -177,9 +177,9 @@ export class Game {
     if (Math.random() > encounterChance) return
 
     events.emit(GameEvents.WINDOW_OPEN, {
-      title: 'Encounter!',
-      content: ["You've stumbled upon a random encounter!"],
       buttons: [{ label: 'Close' }],
+      content: ["You've stumbled upon a random encounter!"],
+      title: 'Encounter!',
     })
   }
 
@@ -257,7 +257,7 @@ export class Game {
     const events = this.container.get<EventSystem>('events')
 
     events.emit(GameEvents.WINDOW_OPEN, {
-      title: 'Help & Controls',
+      buttons: [{ label: 'Close' }],
       content: [
         'Arrow Keys: Movement',
         'R: Rest',
@@ -272,7 +272,7 @@ export class Game {
         'The bar along the top contains all your player stats, but for more details you can open the player pane with P. Explore the world, avoid the dangers.',
         'Be careful.',
       ],
-      buttons: [{ label: 'Close' }],
+      title: 'Help & Controls',
     })
   }
 

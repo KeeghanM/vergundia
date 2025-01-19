@@ -13,7 +13,7 @@ export class NoiseGenerator {
   influence: number
 
   constructor(config: NoiseConfig) {
-    this.noise = createNoise2D(alea(config.seed ?? 'Virgundia'))
+    this.noise = createNoise2D(alea(config.seed ?? Math.random()))
     this.scale = config.scale
     this.influence = config.influence ?? 1
   }
