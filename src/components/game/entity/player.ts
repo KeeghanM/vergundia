@@ -3,40 +3,72 @@ import type { Canvas } from '../../../lib/canvas'
 import type { EventSystem } from '../../../lib/eventSystem'
 import type { ServiceContainer } from '../../../lib/serviceContainer'
 import type { StateManager } from '../../../lib/stateManager'
+import type { AbilityId } from '../dataFiles/abilities'
 import type { ConditionId } from '../dataFiles/conditions'
-import type { Terrain, Requirement } from '../index.t'
+import type { Terrain, Requirement, Position } from '../index.t'
 import { GameEvents } from '../index.t'
 import { World } from '../world'
+import { Entity } from './entity'
 
-export class Player {
-  private container: ServiceContainer
+export class Player extends Entity {
   private readonly BASE_MOVE_COST = 1
   private readonly BASE_XP = 1000 // Level 1 XP requirement
   private readonly LEVEL_MULTIPLIER = 1.4
+  private position: Position
+  private xp: number
+  private warned: boolean
+  private requirements: Set<Requirement>
 
   constructor(container: ServiceContainer) {
-    this.container = container
+    super(container, {
+      damageMultiplier: 1,
+      energy: {
+        current: 100,
+        max: 100,
+      },
+      health: {
+        current: 100,
+        max: 100,
+      },
+      healthRegen: 1,
+      invisible: false,
+    })
+    this.position = { x: 0, y: 0 }
+    this.xp = 0
+    this.warned = false
+
+    // Add starting abilities
+    this.addAbility('basic_attack')
+
+    // Add starting requirements
+    this.requirements = new Set()
+  }
+
+  getId(): string {
+    return 'player'
   }
 
   move(dx: number, dy: number) {
     const state = this.container.get<StateManager>('state')
     const events = this.container.get<EventSystem>('events')
-    const currentState = state.getState()
-    const currentPos = currentState.player.position
 
-    const newX = currentPos.x + dx
-    const newY = currentPos.y + dy
+    const newX = this.position.x + dx
+    const newY = this.position.y + dy
 
     // Check if movement is possible
     if (!this.canMove(dx, dy)) return
 
     // Update position
+    this.position = { x: newX, y: newY }
     state.updatePlayerPosition(newX, newY)
 
     // Calculate energy cost
-    const energyCost = this.calculateMoveCost(currentState.world.currentTerrain)
-    const newEnergy = currentState.player.energy - energyCost
+    const world = this.container.get<World>('world')
+    const terrain = world.getTerrain(newX, newY).terrain
+    const energyCost = this.calculateMoveCost(terrain)
+    const newEnergy = this.stats.energy.current - energyCost
 
+    this.modifyStat('energy', -energyCost)
     state.updatePlayerStats({
       energy: newEnergy,
       position: { x: newX, y: newY },
@@ -54,25 +86,28 @@ export class Player {
   canMove(dx: number, dy: number): boolean {
     const state = this.container.get<StateManager>('state')
     const events = this.container.get<EventSystem>('events')
-    const currentState = state.getState()
-    const { x, y } = currentState.player.position
 
     const world = this.container.get<World>('world')
-    const terrain = world.getTerrain(x + dx, y + dy).terrain
+    const terrain = world.getTerrain(
+      this.position.x + dx,
+      this.position.y + dy
+    ).terrain
+
+    // Check for movement-preventing conditions
+    if (this.hasCondition('frozen') || this.hasCondition('sleeping')) {
+      return false
+    }
 
     // Check energy requirements
     const energyCost = this.calculateMoveCost(terrain)
-    if (
-      currentState.player.energy - energyCost < 0 &&
-      !currentState.player.warned
-    ) {
+    if (this.stats.energy.current - energyCost < 0 && !this.warned) {
       events.emit(GameEvents.WINDOW_OPEN, {
         buttons: [
           {
             function: () => {
-              state.updatePlayerStats({
-                warned: true,
-              })
+              this.warned = true
+              state.updatePlayerStats({ warned: true })
+              this.move(dx, dy)
             },
             label: 'Continue',
           },
@@ -89,7 +124,7 @@ export class Player {
     // Check terrain requirements
     if (terrain.requirements) {
       for (const requirement of terrain.requirements) {
-        if (!currentState.player.abilities.has(requirement)) {
+        if (!this.requirements.has(requirement)) {
           return false
         }
       }
@@ -103,14 +138,11 @@ export class Player {
   }
 
   private checkExhaustionEffects() {
-    const state = this.container.get<StateManager>('state')
     const events = this.container.get<EventSystem>('events')
-    const currentState = state.getState()
-    const { conditions } = currentState.player
 
-    const isTired = conditions.has('tired')
-    const isExhausted = conditions.has('exhausted')
-    const isConfused = conditions.has('confused')
+    const isTired = this.hasCondition('tired')
+    const isExhausted = this.hasCondition('exhausted')
+    const isConfused = this.hasCondition('confused')
 
     const badThingChance = isConfused
       ? 1
@@ -129,13 +161,14 @@ export class Player {
       const damage = Math.round(20 * badThingChance)
 
       // Update state
-      const newConditions = new Set(conditions)
-      if (newCondition) newConditions.add(newCondition)
-
-      state.updatePlayerStats({
-        conditions: newConditions,
-        health: currentState.player.health - damage,
-      })
+      if (newCondition) {
+        this.addCondition(newCondition, {
+          duration: 5,
+          source: this.getId(),
+          stacks: 1,
+        })
+      }
+      this.modifyStat('health', -damage)
 
       // Show message
       events.emit(GameEvents.WINDOW_OPEN, {
@@ -169,10 +202,15 @@ export class Player {
       buttons: [
         {
           function: () => {
+            this.stats.energy.current = this.stats.energy.max
+            this.stats.health.current = this.stats.health.max
+            this.warned = false
+            this.conditions.clear()
+
             state.updatePlayerStats({
               conditions: new Set(),
-              energy: state.getState().player.maxEnergy,
-              health: state.getState().player.maxHealth,
+              energy: this.stats.energy.max,
+              health: this.stats.health.max,
               warned: false,
             })
             events.emit(GameEvents.WINDOW_CLOSE)
@@ -190,36 +228,28 @@ export class Player {
   }
 
   getLevel(): number {
-    const state = this.container.get<StateManager>('state')
-    const xp = state.getState().player.xp
-
     return (
       Math.floor(
-        Math.log(1 + (xp * (this.LEVEL_MULTIPLIER - 1)) / this.BASE_XP) /
+        Math.log(1 + (this.xp * (this.LEVEL_MULTIPLIER - 1)) / this.BASE_XP) /
           Math.log(this.LEVEL_MULTIPLIER)
       ) + 1
     )
   }
 
   showConditions(): string {
-    const state = this.container.get<StateManager>('state')
-    const conditions = state.getState().player.conditions
-    return Array.from(conditions).join(' | ')
+    return Array.from(this.conditions.keys()).join(' | ')
   }
 
   openInventory() {
     const events = this.container.get<EventSystem>('events')
     events.emit(GameEvents.WINDOW_OPEN, {
-      // TODO: Implement inventory system
       buttons: [{ label: 'Close' }],
-
-      content: ['Your inventory is empty.'],
+      content: ['Your inventory is empty.'], // TODO: Implement inventory system
       title: 'Inventory',
     })
   }
 
   search() {
-    // TODO: Implement search functionality
     const events = this.container.get<EventSystem>('events')
     events.emit(GameEvents.WINDOW_OPEN, {
       buttons: [{ label: 'Close' }],
@@ -229,25 +259,21 @@ export class Player {
   }
 
   addXP(amount: number) {
+    this.xp += amount
     const state = this.container.get<StateManager>('state')
-    const currentXP = state.getState().player.xp
-    state.updatePlayerStats({ xp: currentXP + amount })
+    state.updatePlayerStats({ xp: this.xp })
   }
 
-  addAbility(ability: Requirement) {
+  getXP(): number {
+    return this.xp
+  }
+
+  addAbility(ability: AbilityId) {
+    super.addAbility(ability)
     const state = this.container.get<StateManager>('state')
-    const currentAbilities = state.getState().player.abilities
     state.updatePlayerStats({
-      abilities: new Set([...currentAbilities, ability]),
+      abilities: new Set([...this.abilities]),
     })
-  }
-
-  removeCondition(condition: ConditionId) {
-    const state = this.container.get<StateManager>('state')
-    const currentConditions = state.getState().player.conditions
-    const newConditions = new Set(currentConditions)
-    newConditions.delete(condition)
-    state.updatePlayerStats({ conditions: newConditions })
   }
 
   draw(canvas: Canvas, centerX: number, centerY: number) {

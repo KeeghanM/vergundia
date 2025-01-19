@@ -1,3 +1,4 @@
+import type { AbilityId } from './dataFiles/abilities'
 import type { ConditionId } from './dataFiles/conditions'
 
 export type Position = {
@@ -13,7 +14,8 @@ export type PlayerState = {
   maxEnergy: number
   xp: number
   conditions: Set<ConditionId>
-  abilities: Set<Requirement>
+  abilities: Set<AbilityId>
+  requirements: Set<Requirement>
   warned: boolean
 }
 

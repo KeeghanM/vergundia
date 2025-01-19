@@ -30,7 +30,7 @@ export class Canvas {
     this.height = height
 
     this.color = 'black'
-    this.fontSize = 10
+    this.fontSize = 16
     this.font = `${this.fontSize}px ui-monospace`
 
     document.addEventListener('click', (e) => {

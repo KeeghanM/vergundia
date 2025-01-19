@@ -57,6 +57,7 @@ export class Game {
         maxEnergy: 100,
         maxHealth: 100,
         position: { x: 0, y: 0 },
+        requirements: new Set(),
         warned: false,
         xp: 0,
       },

@@ -55,7 +55,7 @@ enum DamageType {
   lightning = 'lightning',
 }
 
-type Monster = {
+export type Monster = {
   name: string
   description: string
   lore: string

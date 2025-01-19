@@ -1,68 +1,102 @@
-export type Effect = {
+import type { Entity } from '../entity/entity'
+import type { ConditionId } from './conditions'
+
+type BaseEffect = {
   name: string
   description: string
 }
 
+type InstantEffect = BaseEffect & {
+  type: 'instant'
+  action: (target: Entity) => void
+}
+
+type ConditionEffect = BaseEffect & {
+  type: 'condition'
+  condition: ConditionId
+  duration: number
+}
+
+type StatusEffect = BaseEffect & {
+  type: 'status'
+  modifiers: {
+    [stat: string]: number | boolean
+  }
+  duration: number
+}
+
+export type Effect = InstantEffect | ConditionEffect | StatusEffect
+
 export const EFFECTS = {
-  bleeding: {
-    description: 'The target bleeds, taking damage over time',
-    name: 'Bleeding',
-  },
   damage_increase: {
-    description: 'The target deals increased damage',
+    description: 'Increases damage dealt by 50%',
+    duration: 3,
+    modifiers: {
+      damageMultiplier: 1.5,
+    },
     name: 'Damage Increase',
-  },
-  entangle: {
-    description: 'Roots and vines wrap around the target, immobilizing them',
-    name: 'Entangle',
-  },
-  fear: {
-    description: 'The target is frightened and runs away',
-    name: 'Fear',
+    type: 'status',
   },
   health_regeneration: {
-    description: 'The target regenerates health over time',
+    description: 'Regenerates health over time',
+    duration: 5,
+    modifiers: {
+      healthRegen: 5,
+    },
     name: 'Health Regeneration',
+    type: 'status',
   },
-  invisibility_in_darkness: {
-    description: 'The target becomes invisible in darkness',
-    name: 'Invisibility in Darkness',
+
+  invisible: {
+    description: 'The user is invisible in darkness',
+    duration: 5,
+    modifiers: {
+      invisible: true,
+    },
+    name: 'Invisible in Darkness',
+    type: 'status',
   },
+
   knockback: {
+    action: (target: Entity) => {
+      // Implementation of knockback logic
+    },
     description: 'The target is pushed away from the attacker',
     name: 'Knockback',
+    type: 'instant',
   },
+
   life_drain: {
+    action: (target: Entity) => {
+      target.modifyStat('health', -20)
+      // Would need source entity for healing
+    },
     description: 'The target loses health and the attacker gains health',
     name: 'Life Drain',
+    type: 'instant',
   },
-  nausea: {
-    description: 'The target is nauseated and has reduced accuracy',
-    name: 'Nausea',
-  },
-  prone: {
-    description: 'The target is knocked prone and must stand up',
-    name: 'Prone',
+
+  poison: {
+    condition: 'poisoned',
+    description: 'The target is poisoned and will take damage over time',
+    duration: 5,
+    name: 'Poison',
+    type: 'condition',
   },
   pull: {
+    action: (target: Entity) => {
+      // Implementation of pull logic
+    },
     description: 'The target is pulled towards the attacker',
     name: 'Pull',
+    type: 'instant',
   },
   sleep: {
+    condition: 'sleeping',
     description: 'The target falls asleep and cannot act',
+    duration: 3,
     name: 'Sleep',
-  },
-  stun: {
-    description: 'The target is stunned and unable to act',
-    name: 'Stun',
-  },
-  suppress: {
-    description: 'The target is unable to use abilities',
-    name: 'Suppress',
-  },
-  terror: {
-    description: 'The target is terrified and unable to act',
-    name: 'Terror',
+    type: 'condition',
   },
 } as const satisfies Record<string, Effect>
 
