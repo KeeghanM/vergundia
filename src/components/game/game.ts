@@ -52,7 +52,7 @@ export class Game {
       player: {
         abilities: new Set(),
         conditions: new Set(),
-        energy: 10,
+        energy: 100,
         health: 100,
         maxEnergy: 100,
         maxHealth: 100,

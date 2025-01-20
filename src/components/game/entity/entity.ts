@@ -51,19 +51,20 @@ export abstract class Entity {
     const current = this.stats[stat]
     if (typeof current !== 'object') {
       // basic stat
-      if (typeof value === 'number' && typeof stat === 'number') {
+      if (typeof value === 'number') {
         this.stats[stat] += value
-      } else if (typeof value === 'boolean' && typeof stat === 'boolean') {
+      } else if (typeof value === 'boolean') {
         this.stats[stat] = value
       }
     } else {
       // object stat
-      if (typeof value === 'number' && typeof stat === 'number') {
-        this.stats[stat].current += Math.min(
-          Math.max(value, 0),
+      if (typeof value === 'number') {
+        const newVal = Math.min(
+          Math.max((this.stats[stat].current += value), 0),
           this.stats[stat].max
         )
-      } else if (typeof value === 'boolean' && typeof stat === 'boolean') {
+        this.stats[stat].current = newVal
+      } else if (typeof value === 'boolean') {
         this.stats[stat] = value
       }
     }
