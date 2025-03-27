@@ -11,6 +11,7 @@ import {
 } from './index.t'
 import { Player } from './entity/player'
 import { World } from './world'
+import { MONSTERS, type Monster } from './dataFiles/monsters'
 
 export class Game {
   private container: ServiceContainer
@@ -167,7 +168,7 @@ export class Game {
     })
   }
 
-  private checkForEncounters() {
+  private async checkForEncounters() {
     const state = this.container.get<StateManager>('state')
     const events = this.container.get<EventSystem>('events')
     const currentState = state.getState()
@@ -177,9 +178,72 @@ export class Game {
     const encounterChance = currentState.world.currentTerrain.difficulty / 10
     if (Math.random() > encounterChance) return
 
+    const validMonsters: Monster[] = Object.values(MONSTERS).filter(
+      (monster) =>
+        monster.validBiomes.length === 0 ||
+        monster.validBiomes.includes(currentState.world.currentBiome)
+    )
+
+    // Find the rarest monster's rarity value
+    const highestRarity = Math.max(...validMonsters.map((m) => m.rarity))
+
+    // Get total weight (inverted relative to highest rarity)
+    const totalWeight = validMonsters.reduce(
+      (sum, monster) => sum + (highestRarity - monster.rarity + 1),
+      0
+    )
+
+    const roll = Math.random() * totalWeight
+
+    // Find the monster that matches our roll
+    let currentWeight = 0
+    const chosenMonster =
+      validMonsters.find((monster) => {
+        currentWeight += highestRarity - monster.rarity + 1
+        return roll < currentWeight
+      }) || validMonsters[0]
+    const monster = {
+      abilities: chosenMonster.abilities,
+      aggression: chosenMonster.aggression,
+      behavior: chosenMonster.behavior,
+      description: chosenMonster.description,
+      intelligence: chosenMonster.intelligence,
+      level: Math.round(
+        Math.random() * (chosenMonster.maxLevel - chosenMonster.minLevel) +
+          chosenMonster.minLevel
+      ),
+      lore: chosenMonster.lore,
+      maxHealth: 0, // Placeholder
+      name: chosenMonster.name,
+      size: chosenMonster.size,
+    }
+    monster.maxHealth = monster.level * chosenMonster.baseHealth
+
+    // Get the surrounding terrain
+    const world = this.container.get<World>('world')
+    const currentTerrain = `${currentState.player.position.x},${currentState.player.position.y}: ${currentState.world.currentBiome} ${currentState.world.currentTerrain.type}`
+    const surroundingTerrain = world
+      .getAdjacentTerrain(
+        currentState.player.position.x,
+        currentState.player.position.y,
+        2
+      )
+      .map(
+        (t) => `${t.x},${t.y}: ${t.terrain.biomeName} ${t.terrain.terrain.type}`
+      )
+
+    const encounterDescription = await this.generateAi(
+      JSON.stringify({
+        currentTerrain,
+        monster,
+        playerState: currentState.player,
+        surroundingTerrain,
+      })
+    )
+
     events.emit(GameEvents.WINDOW_OPEN, {
       buttons: [{ label: 'Close' }],
-      content: ["You've stumbled upon a random encounter!"],
+      content: [encounterDescription],
       title: 'Encounter!',
     })
   }
@@ -197,6 +261,7 @@ export class Game {
     const screenCenterY = Math.floor(this.cellsDown / 2)
 
     // Draw world
+    canvas.setFont(canvas.fontSize, 'ui-monospace')
     for (let screenX = 0; screenX < this.cellsAcross; screenX++) {
       for (let screenY = 0; screenY < this.cellsDown; screenY++) {
         const { x: worldX, y: worldY } = this.screenToWorld(screenX, screenY)
@@ -246,12 +311,8 @@ export class Game {
 
     // Draw UI text
     canvas.setColor('black')
-    canvas.text(
-      uiText,
-      canvas.fontSize,
-      canvas.fontSize * 1.3,
-      'Quintessential'
-    )
+    canvas.setFont(20, 'ui-monospace')
+    canvas.text(uiText, canvas.fontSize, canvas.fontSize * 1.3)
   }
 
   private help() {
@@ -293,6 +354,20 @@ export class Game {
     const state = this.container.get<StateManager>('state')
     state.dispatch('ui', { isPaused: false })
     this.draw()
+  }
+
+  async generateAi(prompt: string) {
+    this.pause()
+    const resp = await fetch('/api/gen', {
+      body: JSON.stringify({ prompt }),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      method: 'POST',
+    })
+    const data = await resp.json()
+    this.resume()
+    return data.text
   }
 
   // Method to access the service container (useful for testing and debugging)

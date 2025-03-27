@@ -1,6 +1,6 @@
-import { Requirement as r, type BiomeMap } from '../index.t'
+import { Requirement as r, type Biome } from '../index.t'
 
-export const biomes: BiomeMap = {
+export const BIOMES = {
   alpine: {
     conditions: {
       maxTemp: 0.3,
@@ -330,4 +330,6 @@ export const biomes: BiomeMap = {
       '1': { color: '#ff4400', difficulty: 4, label: '%', type: 'lava flows' },
     },
   },
-}
+} as const satisfies Record<string, Biome>
+
+export type BiomeType = keyof typeof BIOMES

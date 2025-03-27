@@ -31,7 +31,7 @@ export class Canvas {
 
     this.color = 'black'
     this.fontSize = 16
-    this.font = `${this.fontSize}px ui-monospace`
+    this.font = `16px ui-monospace`
 
     document.addEventListener('click', (e) => {
       if (e.target === this.canvas) {
@@ -54,8 +54,8 @@ export class Canvas {
   setColor(color: string) {
     this.color = color
   }
-  setFont(size: number, name: string, style?: string) {
-    this.font = `${size}px ${name} ${style}`
+  setFont(size: number, name: string) {
+    this.font = `${size}px ${name}`
   }
 
   rect(x: number, y: number, width: number, height: number) {
@@ -63,9 +63,8 @@ export class Canvas {
     this.ctx.fillRect(x, y, width, height)
   }
 
-  text(text: string, x: number, y: number, font?: string) {
+  text(text: string, x: number, y: number) {
     this.ctx.fillStyle = this.color
-    this.setFont(this.fontSize, font ?? 'ui-monospace')
     this.ctx.font = this.font
     this.ctx.fillText(text, x, y)
   }

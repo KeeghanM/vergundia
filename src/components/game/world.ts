@@ -1,7 +1,7 @@
-import type { Biome, BiomeConfig, ChunkCache } from './index.t'
+import type { Biome, BiomeConfig, ChunkCache, Terrain } from './index.t'
 import { NoiseGenerator } from '../../lib/noiseGenerator'
 import { TerrainSystem } from './terrainSystem'
-import { biomes } from './dataFiles/biomes'
+import { BIOMES } from './dataFiles/biomes'
 import type { ServiceContainer } from '../../lib/serviceContainer'
 
 export class World {
@@ -44,7 +44,7 @@ export class World {
     })
 
     // Initialize biome systems
-    this.biomeSystems = Object.values(biomes).map((biome) => ({
+    this.biomeSystems = Object.values(BIOMES).map((biome) => ({
       biome,
       terrainSystem: new TerrainSystem(biome.terrainTypes),
     }))
@@ -111,6 +111,32 @@ export class World {
     const height = this.normalizeTerrain(baseHeight + detailHeight)
 
     return { height, moisture, temp }
+  }
+
+  getAdjacentTerrain(
+    x: number,
+    y: number,
+    radius: number
+  ): {
+    terrain: {
+      terrain: Terrain
+      biomeName: string
+    }
+    x: number
+    y: number
+  }[] {
+    const terrain = []
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dy = -radius; dy <= radius; dy++) {
+        if (dx === x && dy === y) continue
+        terrain.push({
+          terrain: this.getTerrain(x + dx, y + dy),
+          x: x + dx,
+          y: y + dy,
+        })
+      }
+    }
+    return terrain
   }
 
   getTerrain(x: number, y: number) {
