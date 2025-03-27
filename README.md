@@ -1,48 +1,46 @@
-# Astro Starter Kit: Basics
+# Vergundia
 
-```sh
-npm create astro@latest -- --template basics
-```
+A classic browser-based horror roguelike game built with TypeScript and Astro.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+## Overview
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Vergundia is a text-based roguelike adventure set in a horror-themed world. The game features procedurally generated terrain, a complex biome system, and challenging monster encounters.
 
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
+## Features
 
-## 🚀 Project Structure
+- Procedurally generated world with diverse biomes and terrain types
+- Turn-based gameplay
+- Energy and health management system
+- Monster encounters with various abilities and attributes
+- Item collection and progression
+- Condition system (status effects)
 
-Inside of your Astro project, you'll see the following folders and files:
+## Controls
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src/
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+- **Arrow Keys**: Move your character
+- **R**: Rest and recover
+- **I**: Open inventory
+- **S**: Search the area
+- **H** or **Esc**: Help menu
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## Development
 
-## 🧞 Commands
+The game is built using:
 
-All commands are run from the root of the project, from a terminal:
+- TypeScript for game logic
+- Astro framework for UI components
+- HTML Canvas for rendering
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## Project Structure
 
-## 👀 Want to learn more?
+- `/entity`: Player, monster, and entity classes
+- `/dataFiles`: Game data like abilities, conditions, monsters, and items
+- `/lib`: Core utilities (canvas, event system, state management)
+- `/terrainSystem`: World generation and biome management
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+## Getting Started
+
+1. Clone the repository
+2. Install dependencies with `npm install`
+3. Run the development server with `npm run dev`
+4. Build for production with `npm run build`
